@@ -1,0 +1,84 @@
+# Cryptadoodle
+
+Status: prototype, build 0.1.0-p3.9. Not approved for public release.
+Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
+
+## Concept
+
+A daily cryptogram. Each tile is one letter of a famous quote, shown in code. Each code letter stands for one real letter, and the mapping is shuffled for every puzzle. The mapping never maps a letter to itself.
+
+Players guess the real letter behind a code letter. Every tile with that code letter is revealed when a guess is right. Points depend on how hard a letter is to pin down.
+
+## Rules
+
+- Tap a tile to select its code letter. Type one letter and press Guess or Enter.
+- A correct guess reveals every tile with that code letter and scores points.
+- A wrong guess costs 1 point.
+- A letter already tried for that code letter, or a letter already found, can't be guessed again. It doesn't score or penalize.
+- There are no hints.
+- A theme line shows the author or subject of the quote. Any puzzle may have one, and it is optional.
+
+## Scoring
+
+- Value of an unrevealed code letter = (number of unrevealed letters left in its word) × (Scrabble tile value of the real letter).
+- A letter in several words uses the lowest word value.
+- Points are awarded per occurrence. A letter that appears 3 times in the quote scores 3 times its value when guessed.
+- Revealing a letter lowers the value of the other letters in its words by one each.
+- Tile values: A1 B3 C3 D2 E1 F4 G2 H4 I1 J8 K5 L1 M3 N1 O1 P3 Q10 R1 S1 T1 U1 V4 W4 X8 Y4 Z10.
+- Example: a 9-letter word with a Z is worth 9 × 10 = 90 per Z. A 1-letter word with an A is worth 1.
+- Values are current values. They appear under each unrevealed tile and recalculate after each correct guess.
+- Scoring is a playtest starting point. Values are expected to change after playtesting.
+
+## Solved state
+
+- Shows the score and the max possible score for the puzzle: every guess right, in the best order.
+- The quote is shown on completion.
+
+## Letters Used column
+
+- A column to the right of the gameplay area, under a "Letters Used" header at the theme line.
+- Shows only letters that can no longer be used:
+  - Green: found.
+  - Red: tried wrong against every open code letter.
+- A single wrong guess does not add a letter.
+- Header and column are always visible, even when empty.
+
+## Layout
+
+- Mobile first: 375 to 430 px. No horizontal scroll.
+- Words never wrap. Tiles shrink to fit the longest word in the quote.
+- Order: theme, board, code line, guess box, score, last guess, New puzzle.
+- Last guess shows the guessed letter as a tile, then the result: "right, +N" or "wrong, −1".
+- Footer: build number, JeremyToeman.com, Ko-fi, Froobaloo.
+
+## Quotes
+
+- Prototype set: To be or not to be (Shakespeare, Hamlet); Knowledge is power (Francis Bacon); Where there is a will, there is a way (Proverb); Stay hungry, stay foolish (Whole Earth Catalog).
+- A curator picks each day's phrase. Daily selection is not built yet.
+
+## Tutorial
+
+- Planned: an interactive walkthrough on a short quote that teaches the rules.
+- Not built yet.
+
+## Open items
+
+- Playtest 0.1.0-p3.9 and tune scoring values.
+- Small tiles on narrow phones with long words fall below the 44 px tap target. Decide the layout for this.
+- Tutorial design and build.
+- Daily quote selection and scheduling.
+- Sourceword CC BY-SA attribution is unverified. Confirm before any public launch.
+- Word list license: the Wordsummit list is unlicensed in its repo and is not planned for use.
+- Nothing is public until the owner approves a release.
+
+## Build log
+
+- 0.1.0-p1: first prototype, quotes and scoring rules.
+- 0.1.0-p2: single text entry, tap-to-select tiles.
+- 0.1.0-p3: alerts, wrong-guess penalty, score above puzzle, letter column, theme line.
+- 0.1.0-p3.1 to p3.3: score and alert visibility, Guess button fix, Enter key.
+- 0.1.0-p3.4 to p3.5: letter column to the right, feedback as "Last guess", score under entry.
+- 0.1.0-p3.6: no repeat guesses, Clear removed, max possible score, Letters Used header.
+- 0.1.0-p3.7: divider full height, board centered.
+- 0.1.0-p3.8: words never wrap, tiles shrink to fit.
+- 0.1.0-p3.9: Letters Used header at theme level, narrow column, no self-mapping.

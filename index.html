@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cryptadoodle</title>
+<style>
+  :root { --ink:#1d1d1f; --paper:#fbfaf6; --line:#d6d3ca; --accent:#2f6fde; --ok:#2e8b57; --bad:#c0392b; --muted:#6b6b6b; --open:#e2e2e2; --open-ink:#8a8a8a; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color:var(--ink); background:var(--paper); }
+  .col { max-width:430px; margin:0 auto; padding:12px 12px 24px; min-height:100vh; display:flex; flex-direction:column; gap:12px; }
+  header { display:flex; align-items:center; justify-content:space-between; }
+  h1 { font-size:20px; margin:0; }
+  button { font:inherit; min-height:44px; min-width:44px; border:1px solid var(--line); background:#fff; border-radius:8px; padding:0 12px; cursor:pointer; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button:disabled { opacity:.4; cursor:default; }
+
+  #scorebar { display:flex; justify-content:center; align-items:baseline; gap:8px; }
+  #scorebar .label { font-size:28px; font-weight:700; color:var(--ink); }
+  #score { font-size:28px; font-weight:700; }
+  #score.neg { color:var(--bad); }
+
+  #theme { text-align:center; font-size:14px; color:var(--muted); min-height:20px; }
+
+  #board { display:flex; flex-wrap:wrap; gap:12px 16px; justify-content:center; padding:4px 0; }
+  .word { display:flex; gap:4px; flex:0 0 auto; flex-wrap:nowrap; justify-content:center; }
+  .cell { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .tile { width:var(--tw,34px); height:var(--th,40px); min-width:0; min-height:0; padding:0; font-size:var(--tf,18px); display:flex; align-items:center; justify-content:center; border-radius:6px; }
+  .tile.open { background:var(--open); color:var(--open-ink); font-weight:400; border-color:#cfcfcf; }
+  .tile.done { background:#fff; color:var(--ink); font-weight:800; border-color:var(--ink); }
+  .tile.sel { outline:2px solid var(--accent); outline-offset:1px; }
+  .val { font-size:12px; color:var(--muted); min-height:14px; line-height:14px; }
+
+  .entry { display:flex; gap:8px; justify-content:center; align-items:center; }
+  #entryBox { width:64px; height:52px; text-align:center; font-size:24px; font-weight:700; text-transform:uppercase; border:2px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); }
+  #entryBox:focus { outline:none; border-color:var(--accent); }
+  #entryBox:disabled { background:#f0efea; }
+  #entryBox.shake { animation: shake .35s; border-color:var(--bad); }
+  @keyframes shake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-6px); } 75% { transform:translateX(6px); } }
+  #selinfo { min-height:24px; font-size:15px; text-align:center; }
+  #selinfo b { font-weight:700; }
+
+  #alert { display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:10; width:calc(100% - 24px); max-width:406px; background:var(--bad); color:#fff; border-radius:8px; padding:12px; text-align:center; font-weight:700; font-size:17px; box-shadow:0 4px 14px rgba(0,0,0,.2); }
+  #alert.show { display:block; }
+  #alert.good { background:var(--ok); }
+  #score.flash { animation: flash .5s; }
+  @keyframes flash { 0%,100% { transform:scale(1); } 40% { transform:scale(1.25); } }
+
+  .stage { display:flex; gap:12px; align-items:stretch; }
+  .stage::before { content:""; flex:0 0 37px; } /* same width as the tray column, so the board centers on the page */
+  .play { flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+  #trayWrap { flex:0 0 auto; width:37px; border-left:1px solid var(--line); padding-left:10px; }
+  .topRow { display:flex; align-items:flex-start; gap:12px; }
+  #theme { flex:1; min-width:0; }
+  #trayHead { flex:0 0 auto; font-size:12px; color:var(--muted); line-height:1.2; white-space:nowrap; text-align:right; margin-top:2px; }
+  .chip { display:inline-flex; align-items:center; justify-content:center; width:26px; height:30px; border:1px solid var(--ink); border-radius:6px; background:#fff; color:var(--ink); font-weight:800; font-size:16px; vertical-align:middle; }
+  #trayWrap.show { display:block; }
+  #tray { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  #tray span { display:flex; align-items:center; justify-content:center; width:26px; height:30px; border-radius:5px; font-weight:700; font-size:13px; background:var(--open); color:var(--open-ink); }
+  #tray span.good { background:var(--ok); color:#fff; }
+  #tray span.bad { background:var(--bad); color:#fff; }
+  #tray-label { font-size:12px; color:var(--muted); text-align:center; }
+
+  .row { display:flex; justify-content:flex-end; align-items:center; gap:8px; }
+  #msg { min-height:24px; text-align:center; font-size:15px; }
+  #solvedBox { display:none; background:#fff; border:1px solid var(--ok); border-radius:10px; padding:12px; text-align:center; }
+  #solvedBox.show { display:block; }
+  footer { margin-top:auto; font-size:13px; color:var(--muted); text-align:center; line-height:1.6; }
+  footer a { color:var(--muted); }
+  dialog { border:1px solid var(--line); border-radius:12px; max-width:400px; width:calc(100% - 24px); color:var(--ink); }
+  dialog::backdrop { background:rgba(0,0,0,.35); }
+  dialog h2 { font-size:18px; margin:0 0 8px; }
+  dialog p, dialog li { font-size:15px; line-height:1.5; }
+  dialog ul { padding-left:20px; margin:8px 0; }
+  .muted { color:var(--muted); font-size:13px; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+<main class="col">
+  <header>
+    <h1>Cryptadoodle</h1>
+    <button id="helpBtn" type="button">How to play</button>
+  </header>
+
+  <div class="topRow">
+    <div id="theme"></div>
+    <div id="trayHead">Letters Used</div>
+  </div>
+
+  <div class="stage">
+  <div class="play">
+  <section id="board" aria-label="Puzzle"></section>
+
+  <div id="selinfo" aria-live="polite"></div>
+
+  <form id="entry" class="entry" autocomplete="off">
+    <input id="entryBox" type="text" maxlength="1" inputmode="text" autocapitalize="characters"
+           autocorrect="off" spellcheck="false" enterkeyhint="go" disabled
+           aria-label="Your letter guess">
+    <button id="guessBtn" class="primary" type="button" disabled>Guess</button>
+  </form>
+
+  <div id="scorebar">
+    <span class="label">Score</span>
+    <span id="score">0</span>
+  </div>
+  </div>
+
+  <div id="trayWrap">
+    <div id="tray" aria-label="Letters used"></div>
+  </div>
+  </div>
+
+  <div id="alert" role="alert"></div>
+
+  <div id="msg" aria-live="polite"></div>
+
+  <div class="row">
+    <button id="newBtn" type="button">New puzzle</button>
+  </div>
+
+  <div id="solvedBox">
+    <p><b>Solved.</b> <span id="finalScore"></span></p>
+    <p id="finalQuote" class="muted"></p>
+  </div>
+
+  <footer>
+    <div>Build 0.1.0-p3.9 (prototype)</div>
+    <div>
+      <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
+      <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
+      <a href="https://froobaloo.com">Froobaloo</a>
+    </div>
+  </footer>
+</main>
+
+<dialog id="help">
+  <h2>How to play</h2>
+  <ul>
+    <li>Each tile is one letter of a famous quote, shown in code. The same code letter always stands for the same letter.</li>
+    <li>The theme under the score tells you who said it or what it's about.</li>
+    <li>Tap a tile, type its letter in the box, then press Guess or Enter.</li>
+    <li>A correct guess reveals every tile with that code letter, in bold, and scores points.</li>
+    <li>A wrong guess costs 1 point and shows an alert.</li>
+    <li>Points: an unrevealed letter is worth the number of unrevealed letters left in its word, times its Scrabble tile value (rarer letters count more). The current value shows under each grey tile.</li>
+    <li>If a code letter appears in several words, the lowest value among those words is used. You earn that value for each time the letter appears.</li>
+    <li>Example: a 9-letter word with a Z is worth 9 × 10 = 90 per Z. A 1-letter word with an A is worth 1.</li>
+    <li>A letter column appears on the right once a letter can no longer be used. Green = found. Red = tried wrong in every open spot.</li>
+    <li>You can't guess a letter you've already tried for that code, or a letter already found.</li>
+    <li>Rule 37: there are no hints in this build.</li>
+  </ul>
+  <p class="muted">Build 0.1.0-p3.9 (prototype)</p>
+  <p><button id="closeHelp" class="primary" type="button">Got it</button></p>
+</dialog>
+
+<script>
+const RARITY = {A:1,B:3,C:3,D:2,E:1,F:4,G:2,H:4,I:1,J:8,K:5,L:1,M:3,N:1,O:1,P:3,Q:10,R:1,S:1,T:1,U:1,V:4,W:4,X:8,Y:4,Z:10};
+const WRONG_PENALTY = 1;
+// theme is optional; any puzzle can carry one.
+const QUOTES = [
+  { text: "To be or not to be", theme: "William Shakespeare, Hamlet" },
+  { text: "Knowledge is power", theme: "Francis Bacon" },
+  { text: "Where there is a will, there is a way", theme: "Proverb" },
+  { text: "Stay hungry, stay foolish", theme: "Whole Earth Catalog" }
+];
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+let quoteIdx = -1;
+let puzzle = null;      // { quote, theme, words: [[{plain, cipher}]], dec }
+let revealed = new Set();   // cipher letters solved
+let wrongPairs = new Set(); // "CODE+PLAIN" combinations guessed wrong
+let selected = null;        // cipher letter
+let guess = "";
+let score = 0;
+let alertTimer = null;
+
+const entry = document.getElementById("entryBox");
+const guessBtn = document.getElementById("guessBtn");
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function newPuzzle() {
+  let next;
+  do { next = Math.floor(Math.random() * QUOTES.length); } while (QUOTES.length > 1 && next === quoteIdx);
+  quoteIdx = next;
+  const q = QUOTES[quoteIdx];
+  const words = q.text.toUpperCase().match(/[A-Z]+/g);
+  // no letter may stand for itself: redraw until the permutation has no fixed points
+  let perm;
+  do { perm = shuffle([...LETTERS]); } while (perm.some((p, i) => p === LETTERS[i]));
+  const enc = {}, dec = {};
+  LETTERS.forEach((p, i) => { enc[p] = perm[i]; dec[perm[i]] = p; });
+  puzzle = {
+    quote: q.text,
+    theme: q.theme || "",
+    words: words.map(w => [...w].map(p => ({ plain: p, cipher: enc[p] }))),
+    dec
+  };
+  revealed = new Set();
+  wrongPairs = new Set();
+  selected = null;
+  guess = "";
+  score = 0;
+  entry.value = "";
+  document.getElementById("solvedBox").classList.remove("show");
+  hideAlert();
+  setMsg("");
+  render();
+}
+
+function unrevealedInWord(wi) {
+  return puzzle.words[wi].filter(t => !revealed.has(t.cipher)).length;
+}
+
+// Current value of one occurrence of an unrevealed code letter.
+function valueOf(c) {
+  let min = Infinity;
+  puzzle.words.forEach((w, wi) => {
+    if (w.some(t => t.cipher === c)) min = Math.min(min, unrevealedInWord(wi));
+  });
+  return min * RARITY[puzzle.dec[c]];
+}
+
+function occurrences(c) {
+  return puzzle.words.flat().filter(t => t.cipher === c).length;
+}
+
+function totalCodeLetters() {
+  return new Set(puzzle.words.flat().map(t => t.cipher)).size;
+}
+
+function select(c) {
+  if (revealed.has(c)) return;
+  selected = c;
+  guess = "";
+  entry.value = "";
+  setMsg("");
+  render();
+  entry.focus();
+}
+
+function showAlert(letter, detail, good) {
+  const a = document.getElementById("alert");
+  a.textContent = `Last guess: ${letter}: ${detail}`;
+  a.className = "show" + (good ? " good" : "");
+  clearTimeout(alertTimer);
+  alertTimer = setTimeout(hideAlert, 2600);
+  // keep the last result in the message line, with the guessed letter as a tile
+  document.getElementById("msg").innerHTML = `Last guess: <span class="chip">${letter}</span>: ${detail}`;
+  const s = document.getElementById("score");
+  s.classList.remove("flash");
+  void s.offsetWidth;
+  s.classList.add("flash");
+}
+
+function hideAlert() {
+  const a = document.getElementById("alert");
+  a.className = "";
+  a.textContent = "";
+}
+
+function shakeEntry() {
+  entry.classList.remove("shake");
+  void entry.offsetWidth; // restart animation
+  entry.classList.add("shake");
+}
+
+function submit() {
+  if (!selected) { setMsg("Tap a tile first."); return; }
+  if (!guess) { setMsg("Type a letter first."); return; }
+  const c = selected;
+  const g = guess;
+  if (wrongPairs.has(c + g) || foundPlain().has(g)) {
+    setMsg(`Already guessed ${g}.`);
+    guess = ""; entry.value = "";
+    shakeEntry(); entry.focus(); render();
+    return;
+  }
+  if (guess === puzzle.dec[c]) {
+    const v = valueOf(c);
+    const n = occurrences(c);
+    const pts = v * n;
+    revealed.add(c);
+    score += pts;
+    selected = null;
+    guess = "";
+    entry.value = "";
+    entry.blur();
+    showAlert(g, `right, +${pts}`, true);
+    if (revealed.size === totalCodeLetters()) showWin();
+  } else {
+    score -= WRONG_PENALTY;
+    wrongPairs.add(c + guess);
+    guess = "";
+    entry.value = "";
+    showAlert(g, `wrong, −${WRONG_PENALTY}`, false);
+    shakeEntry();
+    entry.focus();
+  }
+  render();
+}
+
+// Points for one code letter, given a set of already-revealed code letters.
+function valueIn(c, rev) {
+  let min = Infinity;
+  puzzle.words.forEach(w => {
+    if (w.some(t => t.cipher === c)) min = Math.min(min, w.filter(t => !rev.has(t.cipher)).length);
+  });
+  return min * RARITY[puzzle.dec[c]];
+}
+
+// Best possible score for this puzzle: every guess right, in the best order.
+function maxPossible() {
+  const codes = [...new Set(puzzle.words.flat().map(t => t.cipher))];
+  const full = (1 << codes.length) - 1;
+  const memo = new Map();
+  const toSet = mask => new Set(codes.filter((_, i) => mask & (1 << i)));
+  function best(mask) {
+    if (mask === full) return 0;
+    if (memo.has(mask)) return memo.get(mask);
+    const rev = toSet(mask);
+    let b = 0;
+    codes.forEach((c, i) => {
+      if (!(mask & (1 << i))) b = Math.max(b, valueIn(c, rev) * occurrences(c) + best(mask | (1 << i)));
+    });
+    memo.set(mask, b);
+    return b;
+  }
+  return best(0);
+}
+
+function showWin() {
+  document.getElementById("solvedBox").classList.add("show");
+  document.getElementById("finalScore").textContent = `Score ${score}. Max possible: ${maxPossible()}.`;
+  document.getElementById("finalQuote").textContent = `"${puzzle.quote}"`;
+}
+
+function setMsg(t) { document.getElementById("msg").textContent = t; }
+
+// Words never wrap: shrink the tiles so the longest word fits the play area.
+function fitTiles() {
+  const play = document.querySelector(".play");
+  const maxLen = Math.max(...puzzle.words.map(w => w.length));
+  const avail = (play.clientWidth || 340) - 8;
+  const w = Math.max(14, Math.min(34, Math.floor((avail - (maxLen - 1) * 4) / maxLen)));
+  const st = document.documentElement.style;
+  st.setProperty("--tw", w + "px");
+  st.setProperty("--th", Math.round(w * 1.18) + "px");
+  st.setProperty("--tf", Math.max(9, Math.round(w * 0.53)) + "px");
+}
+window.addEventListener("resize", () => { if (puzzle) { fitTiles(); } });
+
+function foundPlain() {
+  return new Set([...revealed].map(c => puzzle.dec[c]));
+}
+
+function render() {
+  // score and theme
+  const scoreEl = document.getElementById("score");
+  scoreEl.textContent = score;
+  scoreEl.classList.toggle("neg", score < 0);
+  document.getElementById("theme").textContent = puzzle.theme ? `Theme: ${puzzle.theme}` : "";
+
+  // board
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  puzzle.words.forEach(w => {
+    const wd = document.createElement("div");
+    wd.className = "word";
+    w.forEach(t => {
+      const isDone = revealed.has(t.cipher);
+      const cell = document.createElement("div");
+      cell.className = "cell";
+
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "tile " + (isDone ? "done" : "open") + (selected === t.cipher ? " sel" : "");
+      b.textContent = isDone ? t.plain : t.cipher;
+      b.setAttribute("aria-label", isDone ? `${t.plain}, revealed` : `code letter ${t.cipher}`);
+      b.dataset.c = t.cipher;
+
+      const val = document.createElement("span");
+      val.className = "val";
+      val.textContent = isDone ? "" : valueOf(t.cipher);
+
+      cell.appendChild(b);
+      cell.appendChild(val);
+      wd.appendChild(cell);
+    });
+    board.appendChild(wd);
+  });
+
+  fitTiles();
+
+  // entry state
+  entry.disabled = !selected;
+  guessBtn.disabled = !selected || !guess;
+
+  const info = document.getElementById("selinfo");
+  if (selected) {
+    info.innerHTML = `Code <b>${selected}</b> · worth ${valueOf(selected)} each · appears ${occurrences(selected)}×`;
+  } else {
+    info.textContent = revealed.size === totalCodeLetters() ? "" : "Tap a tile to start.";
+  }
+
+  // letter tray: hidden until a guess is made; then only letters in use (found or tried).
+  // green = found; red = tried against every still-open code letter; grey = tried.
+  const found = foundPlain();
+  const open = [...new Set(puzzle.words.flat().map(t => t.cipher))].filter(c => !revealed.has(c));
+  // only letters that can no longer be used: found, or tried wrong in every open spot
+  const letters = [...new Set(puzzle.words.flat().map(t => t.plain))];
+  const unavailable = letters
+    .filter(l => found.has(l) || (open.length > 0 && open.every(c => wrongPairs.has(c + l))))
+    .sort();
+  const tray = document.getElementById("tray");
+  tray.innerHTML = "";
+  unavailable.forEach(l => {
+    const s = document.createElement("span");
+    s.textContent = l;
+    s.className = found.has(l) ? "good" : "bad";
+    tray.appendChild(s);
+  });
+}
+
+// Tile taps: one delegated listener, so taps always reach select().
+document.getElementById("board").addEventListener("click", e => {
+  const b = e.target.closest("button.tile");
+  if (b && b.dataset.c) select(b.dataset.c);
+});
+
+// Surface any script error on the page instead of failing silently.
+window.addEventListener("error", e => {
+  document.getElementById("msg").textContent = "Error: " + e.message;
+});
+
+entry.addEventListener("input", () => {
+  const m = entry.value.toUpperCase().match(/[A-Z]/g);
+  guess = m ? m[m.length - 1] : "";
+  entry.value = guess;
+  guessBtn.disabled = !selected || !guess;
+});
+
+// Guess works from a plain click and from Enter; no reliance on form submit.
+guessBtn.addEventListener("click", () => submit());
+entry.addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); submit(); }
+});
+document.getElementById("entry").addEventListener("submit", e => {
+  e.preventDefault();
+  submit();
+});
+
+document.getElementById("newBtn").onclick = newPuzzle;
+document.getElementById("helpBtn").onclick = () => document.getElementById("help").showModal();
+document.getElementById("closeHelp").onclick = () => document.getElementById("help").close();
+
+newPuzzle();
+</script>
+</body>
+</html>
