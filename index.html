@@ -508,7 +508,7 @@ function renderTutorial() {
   if (!tutorialMode) { el.style.display = "none"; el.textContent = ""; return; }
   el.style.display = "";
   const step = TUT_STEPS.find(s => !s.done());
-  el.textContent = step ? `Tutorial: ${step.text}` : "Tutorial complete. Press New puzzle to play a real quote.";
+  el.textContent = step ? `Tutorial: ${step.text}` : "Tutorial complete. Today's quote is ready to play.";
 }
 
 // Words never wrap: shrink the tiles so the longest word fits the play area.
