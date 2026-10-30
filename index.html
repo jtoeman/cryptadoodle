@@ -159,7 +159,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.20 (prototype)</div>
+    <div>Build 0.1.0-p3.21 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -234,10 +234,29 @@ function todayNY() {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 }
 
-// Sheet dates look like 9/23/2026.
+// Sheet dates look like 9/23/2026, or 10/20 with no year (the Cryptadoodle tab).
+// With no year, use the year that puts the date closest to today, so a run that
+// crosses New Year still lands on the right day.
 function parseSheetDate(s) {
-  const m = s.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  return m ? `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}` : null;
+  const t = s.trim();
+  const full = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (full) return `${full[3]}-${full[1].padStart(2, "0")}-${full[2].padStart(2, "0")}`;
+  const short = t.match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (!short) return null;
+  const mo = Number(short[1]), d = Number(short[2]);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  const today = todayNY();
+  const ty = Number(today.slice(0, 4));
+  const todayMs = Date.parse(today + "T00:00:00Z");
+  let best = null, bestDiff = Infinity;
+  for (const y of [ty - 1, ty, ty + 1]) {
+    const iso = `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const ms = Date.parse(iso + "T00:00:00Z");
+    if (isNaN(ms)) continue;
+    const diff = Math.abs(ms - todayMs);
+    if (diff < bestDiff) { best = iso; bestDiff = diff; }
+  }
+  return best;
 }
 
 async function loadSheetQuotes() {
