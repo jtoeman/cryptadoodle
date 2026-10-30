@@ -75,6 +75,12 @@
   .pastItem { text-align:left; min-height:44px; }
   .tutorial { font-size:15px; line-height:1.45; color:var(--ink); border:2px solid var(--accent); border-radius:12px; background:var(--paper); padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
   .tutorial p { margin:0; }
+  /* Desktop: the tutorial sits in the middle of the screen. The card lets clicks through to the
+     tiles underneath; only its buttons take clicks, so the tiles it asks for stay usable. */
+  @media (min-width: 720px) {
+    #tutorial.tutorial { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:min(460px, calc(100% - 48px)); z-index:20; pointer-events:none; background:rgba(15,20,28,.94); box-shadow:0 8px 28px rgba(0,0,0,.5); }
+    #tutorial .tutBtns { pointer-events:auto; }
+  }
   .tutBtns { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
   #solvedBox { display:none; background:var(--panel); border:1px solid var(--ok); border-radius:10px; padding:12px; text-align:center; }
   #solvedBox.show { display:block; }
@@ -182,7 +188,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.30 (prototype)</div>
+    <div>Build 0.1.0-p3.31 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -374,9 +380,11 @@ function newPuzzle() {
   do { perm = shuffle([...LETTERS]); } while (perm.some((p, i) => p === LETTERS[i]));
   const enc = {}, dec = {};
   LETTERS.forEach((p, i) => { enc[p] = perm[i]; dec[perm[i]] = p; });
+  const seed = (q.date || "") + "|" + q.text;
   puzzle = {
     quote: q.text,
     date: q.date || null,
+    mods: dailyMods(seed),
     theme: q.theme || "",
     words: words.map(w => [...w].map(p => ({ plain: p, cipher: enc[p] }))),
     dec
@@ -396,6 +404,32 @@ function newPuzzle() {
   track("puzzle_started", { date: puzzle.date, archive: fromArchive });
 }
 
+// Daily hidden modifier per plain letter: -2..+2, final value never below 1.
+// Seeded from the puzzle's date (or its text for the built-in quotes), so every player gets the same numbers.
+function seedFrom(str) {
+  let h = 2166136261;
+  for (const ch of str) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function dailyMods(seed) {
+  const rnd = mulberry32(seedFrom(seed));
+  const mods = {};
+  for (const l of LETTERS) mods[l] = Math.floor(rnd() * 5) - 2;
+  return mods;
+}
+// Points for one occurrence of a plain letter in this puzzle's scoring.
+function letterPts(plain) {
+  return Math.max(1, RARITY[plain] + puzzle.mods[plain]);
+}
+
 function unrevealedInWord(wi) {
   return puzzle.words[wi].filter(t => !revealed.has(t.cipher)).length;
 }
@@ -406,7 +440,7 @@ function valueOf(c) {
   puzzle.words.forEach((w, wi) => {
     if (w.some(t => t.cipher === c)) min = Math.min(min, unrevealedInWord(wi));
   });
-  return min * RARITY[puzzle.dec[c]];
+  return min * letterPts(puzzle.dec[c]);
 }
 
 function occurrences(c) {
@@ -544,7 +578,7 @@ function valueIn(c, rev) {
   puzzle.words.forEach(w => {
     if (w.some(t => t.cipher === c)) min = Math.min(min, w.filter(t => !rev.has(t.cipher)).length);
   });
-  return min * RARITY[puzzle.dec[c]];
+  return min * letterPts(puzzle.dec[c]);
 }
 
 // Best possible score for this puzzle: every guess right, in the best order.
@@ -733,7 +767,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.30", event_properties: props || {}
+        platform: "Web", app_version: "0.1.0-p3.31", event_properties: props || {}
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }

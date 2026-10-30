@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.30. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
+Status: prototype, build 0.1.0-p3.31. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -26,6 +26,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - Revealing a letter lowers the value of the other letters in its words by one each.
 - Tile values: A1 B3 C3 D2 E1 F4 G2 H4 I1 J8 K5 L1 M3 N1 O1 P3 Q10 R1 S1 T1 U1 V4 W4 X8 Y4 Z10.
 - Example: a 9-letter word with a Z is worth 9 × 10 = 90 per Z. A 1-letter word with an A is worth 1.
+- Daily hidden modifier: each letter gets a random -2, -1, 0, +1 or +2 for the day, added to its tile value before scoring. The final value is never below 1. The modifiers are seeded from the puzzle date, so every player gets the same ones. They are never shown.
 - Values are current values. They appear under each unrevealed tile and recalculate after each correct guess.
 - Scoring is a playtest starting point. Values are expected to change after playtesting.
 
@@ -106,6 +107,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.31: daily hidden letter modifiers (-2 to +2, never below 1) seeded from the date. Desktop tutorial sits in the middle of the screen; its card lets clicks through to the tiles.
 - 0.1.0-p3.30: share sends a link to that day's puzzle and, where supported, a cipher-only image. Text is the same length for any quote.
 - 0.1.0-p3.29: anonymous play analytics to Amplitude, only after the player allows it. Consent banner on first visit, toggle in Stats.
 - 0.1.0-p3.28: Orchid color theme (dark background, magenta accent, lavender for found letters, rose for wrong).
