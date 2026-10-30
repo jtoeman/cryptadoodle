@@ -107,7 +107,7 @@
     <p id="tutText"></p>
     <div class="tutBtns">
       <button id="tutNext" class="primary" type="button">Next</button>
-      <button id="tutBack" type="button">Back to today's puzzle</button>
+      <button id="tutDone" class="primary" type="button" hidden>Done</button>
     </div>
   </div>
   <div id="dock">
@@ -159,7 +159,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.19 (prototype)</div>
+    <div>Build 0.1.0-p3.20 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -178,8 +178,6 @@ const QUOTES = [
   { text: "Where there is a will, there is a way", theme: "Proverb" },
   { text: "Stay hungry, stay foolish", theme: "Whole Earth Catalog" }
 ];
-// short quote used by the interactive tutorial
-const TUTORIAL = { text: "Know thyself", theme: "Ancient Greek maxim" };
 // Shared Google Sheet (froobaloodb), tab "Cryptadoodle": columns Date, Quote, Theme.
 // A quote belongs to its date. Future dates are never shown.
 // Read in the browser the same way Sourceword reads its tab. QUOTES is the fallback.
@@ -299,27 +297,24 @@ function togglePast() {
 function pickPast(q) {
   pickedQuote = q;
   tutorialMode = false;
-  mainSnapshot = null;
   document.getElementById("past").hidden = true;
   history.replaceState(null, "", "?day=" + q.date);
   newPuzzle();
 }
 
 function newPuzzle() {
-  let q = TUTORIAL;
-  if (!tutorialMode) {
-    if (pickedQuote) {
-      q = pickedQuote;
-      pickedQuote = null;
-    } else if (dailyQuote) {
-      q = dailyQuote;
-    } else {
-      const pool = pastQuotes().length ? pastQuotes() : QUOTES;
-      let next;
-      do { next = Math.floor(Math.random() * pool.length); } while (pool.length > 1 && next === quoteIdx);
-      quoteIdx = next;
-      q = pool[quoteIdx];
-    }
+  let q;
+  if (pickedQuote) {
+    q = pickedQuote;
+    pickedQuote = null;
+  } else if (dailyQuote) {
+    q = dailyQuote;
+  } else {
+    const pool = pastQuotes().length ? pastQuotes() : QUOTES;
+    let next;
+    do { next = Math.floor(Math.random() * pool.length); } while (pool.length > 1 && next === quoteIdx);
+    quoteIdx = next;
+    q = pool[quoteIdx];
   }
   const words = q.text.toUpperCase().match(/[A-Z]+/g);
   // no letter may stand for itself: redraw until the permutation has no fixed points
@@ -530,7 +525,7 @@ const TUT_STEPS = [
   { text: "Make a real guess now. Type a letter in the box and press Guess, or guess the tile you picked.", gate: () => revealed.size > 0 || wrongPairs.size > 0 },
   { text: "Keep going and solve the rest of the quote. Your score is under the entry box.", gate: () => revealed.size === totalCodeLetters() },
 ];
-const TUT_END = "That's the game. Back to today's puzzle to play for real. Your progress there is saved.";
+const TUT_END = "That's the tutorial. You're set. Keep going with today's quote, and open How to play any time to see this again.";
 // Dialogs with a fallback for browsers that lack showModal().
 function openDialog(d) { if (d.showModal) d.showModal(); else d.setAttribute("open", ""); }
 function closeDialog(d) { if (d.close) d.close(); else d.removeAttribute("open"); }
@@ -546,34 +541,14 @@ function renderTutorial() {
   document.getElementById("tutText").textContent = done ? TUT_END : TUT_STEPS[tutIndex].text;
   // Next only on steps that don't wait for an action
   document.getElementById("tutNext").hidden = done || TUT_STEPS[tutIndex].gate !== null;
+  document.getElementById("tutDone").hidden = !done;
 }
 
-// How to play is a separate round. Today's progress is kept aside and restored on exit.
-let mainSnapshot = null;
-function snapshotState() {
-  return { puzzle, revealed: [...revealed], wrongPairs: [...wrongPairs], score, quoteIdx };
-}
-function restoreState(st) {
-  puzzle = st.puzzle;
-  revealed = new Set(st.revealed);
-  wrongPairs = new Set(st.wrongPairs);
-  score = st.score;
-  quoteIdx = st.quoteIdx;
-  selected = null; guess = ""; entry.value = "";
-  hideAlert(); setMsg("");
-  document.getElementById("solvedBox").classList.remove("show");
-  render();
-}
-function enterTutorial() {
-  if (!tutorialMode) mainSnapshot = puzzle ? snapshotState() : null;
-  tutorialMode = true;
+// How to play turns the guide on or off. It works along with today's puzzle.
+function toggleTutorial() {
+  tutorialMode = !tutorialMode;
   tutIndex = 0; tutFirst = null; trayShown = false;
-  newPuzzle();
-}
-function exitTutorial() {
-  tutorialMode = false;
-  if (mainSnapshot) { restoreState(mainSnapshot); mainSnapshot = null; }
-  else newPuzzle();
+  render();
 }
 
 // Words never wrap: shrink the tiles so the longest word fits the play area.
@@ -694,8 +669,8 @@ document.getElementById("entry").addEventListener("submit", e => {
 });
 
 document.getElementById("pastBtn").onclick = togglePast;
-document.getElementById("helpBtn").onclick = enterTutorial;
-document.getElementById("tutBack").onclick = exitTutorial;
+document.getElementById("helpBtn").onclick = toggleTutorial;
+document.getElementById("tutDone").onclick = () => { tutorialMode = false; render(); };
 document.getElementById("trayClose").onclick = () => closeDialog(document.getElementById("trayModal"));
 document.getElementById("tutNext").onclick = () => { tutIndex++; renderTutorial(); };
 

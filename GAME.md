@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.19. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
+Status: prototype, build 0.1.0-p3.20. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -63,7 +63,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 
 ## Tutorial
 
-- Built in 0.1.0-p3.10: a short quote (Know thyself) with one step shown at a time. Started from How to play.
+- Built in 0.1.0-p3.10 and reworked in 0.1.0-p3.19 and p3.20: interactive guide started from How to play.
 - Steps: tap a tile, make a guess, see a reveal, keep going. No answers are given.
 - Same rules as a real puzzle. Scores and max possible are shown when solved.
 
@@ -72,7 +72,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - Playtest 0.1.0-p3.9 and tune scoring values.
 - Small tiles on narrow phones with long words fall below the 44 px tap target. Decide the layout for this.
 - Tutorial: confirm step wording after playtest.
-- Tutorial and How to play are one entry point (How to play button).
+- Tutorial and How to play are one entry point (How to play button). The tutorial runs on the current puzzle.
 - Spoiler exposure: the whole sheet tab is public, so future quotes can be read from the network response. Fix: serve only today and past rows from an Apps Script endpoint, as Caseboard does for its reports.
 - Sourceword CC BY-SA attribution is unverified. Confirm before any public launch.
 - Word list license: the Wordsummit list is unlicensed in its repo and is not planned for use.
@@ -93,6 +93,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.20: the tutorial works along with today's puzzle (no separate quote, no Back button). How to play toggles it on and off.
 - 0.1.0-p3.19: interactive tutorial. Waits for taps and guesses, highlights tiles that share a code, explains scoring in steps, and shows the Letters Used explanation after the first wrong guess. Same-code tiles are highlighted in the real game too.
 - 0.1.0-p3.18: tutorial steps advance on their action or on Next, so they can't get stuck.
 - 0.1.0-p3.17: How to play is a separate round; today's progress is kept and restored. Tutorial opens with a welcome and the incentive. Letters Used is centered above its column.
