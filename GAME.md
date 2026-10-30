@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.14. Not approved for public release.
+Status: prototype, build 0.1.0-p3.15. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -91,4 +91,5 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.15: hosted as a hidden test build at froobaloo.com/cryptadoodle/ (noindex, no menu card).
 - 0.1.0-p3.14: How to play and Tutorial are one thing. How to play runs the interactive tutorial, with a blue border.
