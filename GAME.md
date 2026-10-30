@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.27. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
+Status: prototype, build 0.1.0-p3.28. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -91,6 +91,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.28: Orchid color theme (dark background, magenta accent, lavender for found letters, rose for wrong).
 - 0.1.0-p3.27: tutorial sits inside the entry panel, so it floats with the entry above the keyboard on phones instead of being covered. Selected tile scrolls above the panel.
 - 0.1.0-p3.26: Letters Used shows every guessed letter. Green if it is in the quote, grey if not. Two per row to keep the column short.
 - 0.1.0-p3.25: Night Desk visual theme (dark slate, amber accent, teal found, coral wrong; Inter and JetBrains Mono).

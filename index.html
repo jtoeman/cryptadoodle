@@ -7,8 +7,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <title>Cryptadoodle</title>
 <style>
-  /* Night Desk theme: dark slate, amber accent, teal for found, coral for wrong. */
-  :root { color-scheme: dark; --ink:#e6edf5; --paper:#0f141c; --panel:#171e29; --line:#2c3646; --accent:#f2b84b; --ok:#4fd1b5; --bad:#ff6b6b; --muted:#9fb0c6; --open:#1b2431; --open-ink:#6f8099; --tile-done:#e6edf5; --done-ink:#0f141c; --on-accent:#0f141c; --on-ok:#0f141c; --on-bad:#0f141c; --mono:"JetBrains Mono", ui-monospace, Menlo, monospace; }
+  /* Orchid theme: dark background, magenta accent, lavender for found, rose for wrong. */
+  :root { color-scheme: dark; --ink:#f1eaf7; --paper:#0f141c; --panel:#1a1424; --line:#33283f; --accent:#e879f9; --ok:#a5b4fc; --bad:#fb7185; --muted:#b3a4c2; --open:#211a2c; --open-ink:#84779a; --tile-done:#fae8ff; --done-ink:#0f141c; --on-accent:#0f141c; --on-ok:#0f141c; --on-bad:#0f141c; --mono:"JetBrains Mono", ui-monospace, Menlo, monospace; }
   * { box-sizing: border-box; }
   body { margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color:var(--ink); background:var(--paper); }
   .col { max-width:430px; margin:0 auto; padding:12px 12px 24px; min-height:100vh; display:flex; flex-direction:column; gap:12px; }
@@ -31,7 +31,7 @@
   .tile { width:var(--tw,34px); height:var(--th,40px); min-width:0; min-height:0; padding:0; font-size:var(--tf,18px); display:flex; align-items:center; justify-content:center; border-radius:6px; font-family:var(--mono); }
   .tile.open { background:var(--open); color:var(--open-ink); font-weight:400; border:1px solid var(--line); }
   .tile.done { background:var(--tile-done); color:var(--done-ink); font-weight:700; border-color:var(--tile-done); }
-  .tile.sel { outline:2px solid var(--accent); outline-offset:1px; box-shadow:0 0 0 4px rgba(242,184,75,.25); }
+  .tile.sel { outline:2px solid var(--accent); outline-offset:1px; box-shadow:0 0 0 4px rgba(232,121,249,.25); }
   .tile.same { background:color-mix(in srgb, var(--accent) 22%, var(--open)); }
   .val { font-size:12px; color:var(--muted); min-height:14px; line-height:14px; font-family:var(--mono); }
 
@@ -171,7 +171,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.27 (prototype)</div>
+    <div>Build 0.1.0-p3.28 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
