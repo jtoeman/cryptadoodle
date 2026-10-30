@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.9. Not approved for public release.
+Status: prototype, build 0.1.0-p3.10. Not approved for public release.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -58,14 +58,15 @@ Players guess the real letter behind a code letter. Every tile with that code le
 
 ## Tutorial
 
-- Planned: an interactive walkthrough on a short quote that teaches the rules.
-- Not built yet.
+- Built in 0.1.0-p3.10: a Tutorial button starts a short quote (Know thyself) with one step shown at a time.
+- Steps: tap a tile, make a guess, see a reveal, keep going. No answers are given.
+- Same rules as a real puzzle. Scores and max possible are shown when solved.
 
 ## Open items
 
 - Playtest 0.1.0-p3.9 and tune scoring values.
 - Small tiles on narrow phones with long words fall below the 44 px tap target. Decide the layout for this.
-- Tutorial design and build.
+- Tutorial: confirm step wording after playtest.
 - Daily quote selection and scheduling.
 - Sourceword CC BY-SA attribution is unverified. Confirm before any public launch.
 - Word list license: the Wordsummit list is unlicensed in its repo and is not planned for use.
@@ -82,3 +83,4 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.7: divider full height, board centered.
 - 0.1.0-p3.8: words never wrap, tiles shrink to fit.
 - 0.1.0-p3.9: Letters Used header at theme level, narrow column, no self-mapping.
+- 0.1.0-p3.10: interactive tutorial on a short quote.

@@ -63,6 +63,7 @@
 
   .row { display:flex; justify-content:flex-end; align-items:center; gap:8px; }
   #msg { min-height:24px; text-align:center; font-size:15px; }
+  .tutorial { text-align:center; font-size:15px; color:var(--accent); font-weight:600; min-height:22px; }
   #solvedBox { display:none; background:#fff; border:1px solid var(--ok); border-radius:10px; padding:12px; text-align:center; }
   #solvedBox.show { display:block; }
   footer { margin-top:auto; font-size:13px; color:var(--muted); text-align:center; line-height:1.6; }
@@ -114,9 +115,12 @@
 
   <div id="alert" role="alert"></div>
 
+  <div id="tutorial" class="tutorial" style="display:none"></div>
+
   <div id="msg" aria-live="polite"></div>
 
   <div class="row">
+    <button id="tutBtn" type="button">Tutorial</button>
     <button id="newBtn" type="button">New puzzle</button>
   </div>
 
@@ -126,7 +130,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.9 (prototype)</div>
+    <div>Build 0.1.0-p3.10 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -148,9 +152,10 @@
     <li>Example: a 9-letter word with a Z is worth 9 × 10 = 90 per Z. A 1-letter word with an A is worth 1.</li>
     <li>A letter column appears on the right once a letter can no longer be used. Green = found. Red = tried wrong in every open spot.</li>
     <li>You can't guess a letter you've already tried for that code, or a letter already found.</li>
+    <li>Tutorial: a short quote with one step at a time, using the same rules.</li>
     <li>Rule 37: there are no hints in this build.</li>
   </ul>
-  <p class="muted">Build 0.1.0-p3.9 (prototype)</p>
+  <p class="muted">Build 0.1.0-p3.10 (prototype)</p>
   <p><button id="closeHelp" class="primary" type="button">Got it</button></p>
 </dialog>
 
@@ -164,6 +169,8 @@ const QUOTES = [
   { text: "Where there is a will, there is a way", theme: "Proverb" },
   { text: "Stay hungry, stay foolish", theme: "Whole Earth Catalog" }
 ];
+// short quote used by the interactive tutorial
+const TUTORIAL = { text: "Know thyself", theme: "Ancient Greek maxim" };
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 let quoteIdx = -1;
@@ -174,6 +181,7 @@ let selected = null;        // cipher letter
 let guess = "";
 let score = 0;
 let alertTimer = null;
+let tutorialMode = false;
 
 const entry = document.getElementById("entryBox");
 const guessBtn = document.getElementById("guessBtn");
@@ -187,10 +195,13 @@ function shuffle(a) {
 }
 
 function newPuzzle() {
-  let next;
-  do { next = Math.floor(Math.random() * QUOTES.length); } while (QUOTES.length > 1 && next === quoteIdx);
-  quoteIdx = next;
-  const q = QUOTES[quoteIdx];
+  let q = TUTORIAL;
+  if (!tutorialMode) {
+    let next;
+    do { next = Math.floor(Math.random() * QUOTES.length); } while (QUOTES.length > 1 && next === quoteIdx);
+    quoteIdx = next;
+    q = QUOTES[quoteIdx];
+  }
   const words = q.text.toUpperCase().match(/[A-Z]+/g);
   // no letter may stand for itself: redraw until the permutation has no fixed points
   let perm;
@@ -344,6 +355,21 @@ function showWin() {
 
 function setMsg(t) { document.getElementById("msg").textContent = t; }
 
+// Tutorial: one step at a time, using the same rules as a real puzzle. No answers are given.
+const TUT_STEPS = [
+  { done: () => selected !== null || revealed.size > 0, text: "Tap a tile to pick a code letter." },
+  { done: () => wrongPairs.size > 0 || revealed.size > 0, text: "Type a letter in the box and press Guess. A wrong guess costs 1." },
+  { done: () => revealed.size > 0, text: "A right guess reveals every tile with that code letter and scores points." },
+  { done: () => revealed.size === totalCodeLetters(), text: "Keep going. Letters Used on the right shows letters you can't use anymore." }
+];
+function renderTutorial() {
+  const el = document.getElementById("tutorial");
+  if (!tutorialMode) { el.style.display = "none"; el.textContent = ""; return; }
+  el.style.display = "";
+  const step = TUT_STEPS.find(s => !s.done());
+  el.textContent = step ? `Tutorial: ${step.text}` : "Tutorial complete. Press New puzzle to play a real quote.";
+}
+
 // Words never wrap: shrink the tiles so the longest word fits the play area.
 function fitTiles() {
   const play = document.querySelector(".play");
@@ -398,6 +424,7 @@ function render() {
   });
 
   fitTiles();
+  renderTutorial();
 
   // entry state
   entry.disabled = !selected;
@@ -457,7 +484,8 @@ document.getElementById("entry").addEventListener("submit", e => {
   submit();
 });
 
-document.getElementById("newBtn").onclick = newPuzzle;
+document.getElementById("newBtn").onclick = () => { tutorialMode = false; newPuzzle(); };
+document.getElementById("tutBtn").onclick = () => { tutorialMode = true; newPuzzle(); };
 document.getElementById("helpBtn").onclick = () => document.getElementById("help").showModal();
 document.getElementById("closeHelp").onclick = () => document.getElementById("help").close();
 
