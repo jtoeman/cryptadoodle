@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.28. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
+Status: prototype, build 0.1.0-p3.29. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -59,6 +59,14 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - If the sheet is unreachable or the tab is missing, the built-in prototype quotes are used.
 - Open issue: the whole tab is downloaded to the page, so future rows can be read by anyone who looks at the network response. See the open items.
 
+## Analytics
+
+- Amplitude project Cryptadoodle. Sends nothing until the player taps Allow on the first-visit banner.
+- Events: puzzle_started (date, archive), guess_made (result right/wrong, score, date), puzzle_solved (date, score, max_possible, guesses), share_clicked (date).
+- Sent with the Amplitude HTTP API (no third-party script). A random device ID is created only after Allow.
+- No quote text, names, or accounts are sent. Changed later in Stats: "Share anonymous play events with the developer".
+- No consent (No thanks or never answered) means no events.
+
 ## Tutorial
 
 - Built in 0.1.0-p3.10 and reworked in 0.1.0-p3.19 and p3.20: interactive guide started from How to play.
@@ -91,6 +99,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.29: anonymous play analytics to Amplitude, only after the player allows it. Consent banner on first visit, toggle in Stats.
 - 0.1.0-p3.28: Orchid color theme (dark background, magenta accent, lavender for found letters, rose for wrong).
 - 0.1.0-p3.27: tutorial sits inside the entry panel, so it floats with the entry above the keyboard on phones instead of being covered. Selected tile scrolls above the panel.
 - 0.1.0-p3.26: Letters Used shows every guessed letter. Green if it is in the quote, grey if not. Two per row to keep the column short.

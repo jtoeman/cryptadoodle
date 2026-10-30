@@ -86,6 +86,8 @@
   dialog p, dialog li { font-size:15px; line-height:1.5; }
   dialog ul { padding-left:20px; margin:8px 0; }
   .muted { color:var(--muted); font-size:13px; }
+  .consent { border:2px solid var(--accent); border-radius:12px; padding:10px 12px; background:var(--panel); font-size:14px; line-height:1.45; display:flex; flex-direction:column; gap:8px; }
+  .consent[hidden] { display:none; }
   .statRow { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line); }
   .statRow b { font-family:var(--mono); color:var(--ok); }
   @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
@@ -157,10 +159,19 @@
     <p><button id="trayClose" class="primary" type="button">Got it</button></p>
   </dialog>
 
+  <div id="consent" class="consent" hidden>
+    <p>Help improve Cryptadoodle: share anonymous play events (puzzle started, guesses, solves) with the developer. No quotes, names, or accounts are sent. You can change this in Stats.</p>
+    <div class="tutBtns">
+      <button id="consentYes" class="primary" type="button">Allow</button>
+      <button id="consentNo" type="button">No thanks</button>
+    </div>
+  </div>
+
   <dialog id="statsModal" aria-labelledby="statsTitle">
     <h2 id="statsTitle">Your stats</h2>
     <div id="statsBody"></div>
     <p class="muted">Stats are kept on this device only.</p>
+    <p><label class="muted"><input id="shareToggle" type="checkbox"> Share anonymous play events with the developer</label></p>
     <p><button id="statsClose" class="primary" type="button">Close</button></p>
   </dialog>
 
@@ -171,7 +182,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.28 (prototype)</div>
+    <div>Build 0.1.0-p3.29 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -198,6 +209,9 @@ const SHEET_TAB = "Cryptadoodle";
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 // Per-device storage. Private windows or blocked storage just mean no memory between visits.
+const AMP_KEY = "d22e44fd46889ba6e8f013ad7728265b"; // Amplitude project: Cryptadoodle
+const CONSENT_KEY = "cryptadoodle.analytics";
+const DEVICE_KEY = "cryptadoodle.deviceId";
 const SEEN_KEY = "cryptadoodle.tutSeen";
 const DAYS_KEY = "cryptadoodle.days";
 function storeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -341,6 +355,7 @@ function pickPast(q) {
 
 function newPuzzle() {
   let q;
+  const fromArchive = !!pickedQuote;
   if (pickedQuote) {
     q = pickedQuote;
     pickedQuote = null;
@@ -371,12 +386,14 @@ function newPuzzle() {
   selected = null;
   guess = "";
   score = 0;
+  guessCount = 0;
   entry.value = "";
   document.getElementById("solvedBox").classList.remove("show");
   document.getElementById("shareMsg").textContent = "";
   hideAlert();
   setMsg("");
   render();
+  track("puzzle_started", { date: puzzle.date, archive: fromArchive });
 }
 
 function unrevealedInWord(wi) {
@@ -502,6 +519,8 @@ function submit() {
     entry.value = "";
     entry.blur();
     showAlert(g, `right, +${pts}`, true);
+    guessCount++;
+    track("guess_made", { result: "right", score: score, date: puzzle.date });
     if (revealed.size === totalCodeLetters()) showWin();
   } else {
     score -= WRONG_PENALTY;
@@ -509,6 +528,8 @@ function submit() {
     guess = "";
     entry.value = "";
     showAlert(g, `wrong, −${WRONG_PENALTY}`, false);
+    guessCount++;
+    track("guess_made", { result: "wrong", score: score, date: puzzle.date });
     if (tutorialMode && !trayShown) { trayShown = true; openDialog(document.getElementById("trayModal")); }
     shakeEntry();
     entry.focus();
@@ -547,6 +568,7 @@ function maxPossible() {
 }
 
 function showWin() {
+  track("puzzle_solved", { date: puzzle.date, score: score, max_possible: maxPossible(), guesses: guessCount });
   document.getElementById("solvedBox").classList.add("show");
   document.getElementById("finalScore").textContent = `Score ${score}. Max possible: ${maxPossible()}.`;
   document.getElementById("finalQuote").textContent = `"${puzzle.quote}"`;
@@ -618,6 +640,7 @@ function shareText() {
 }
 async function shareResult() {
   const text = shareText();
+  track("share_clicked", { date: puzzle.date });
   const msg = document.getElementById("shareMsg");
   if (navigator.share) {
     try { await navigator.share({ text }); msg.textContent = ""; return; }
@@ -634,6 +657,42 @@ function setMsg(t) { document.getElementById("msg").textContent = t; }
 // when the player does the thing. tutFirst remembers the first code letter the player picked.
 let tutFirst = null;
 let trayShown = false;      // the Letters Used explanation pops up once, on the first wrong guess in the tutorial
+let guessCount = 0;         // guesses made on the current puzzle (analytics only)
+
+// Analytics: only after the player says yes. Plain HTTP API, no third-party script.
+// Sends no quote text, names, or accounts: just the event, the date, and numbers.
+function analyticsOn() { return storeGet(CONSENT_KEY) === "yes"; }
+function deviceId() {
+  let id = storeGet(DEVICE_KEY);
+  if (!id) {
+    id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2);
+    storeSet(DEVICE_KEY, id);
+  }
+  return id;
+}
+function track(name, props) {
+  if (!analyticsOn()) return;
+  try {
+    fetch("https://api2.amplitude.com/2/httpapi", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({ api_key: AMP_KEY, events: [{
+        device_id: deviceId(), event_type: name, time: Date.now(),
+        platform: "Web", app_version: "0.1.0-p3.29", event_properties: props || {}
+      }] })
+    }).catch(() => {});
+  } catch (e) { /* analytics never breaks the game */ }
+}
+function setAnalytics(on) {
+  storeSet(CONSENT_KEY, on ? "yes" : "no");
+  if (on) deviceId();
+  const box = document.getElementById("consent");
+  if (box) box.hidden = true;
+  const t = document.getElementById("shareToggle");
+  if (t) t.checked = on;
+  if (on && puzzle) track("puzzle_started", { date: puzzle.date, archive: false, late_consent: true });
+}
 const TUT_STEPS = [
   { text: "Welcome to Cryptadoodle. Every day you get a famous quote or phrase, but all the letters are encrypted. Your job is to work out the message, and score as high as you can along the way.", gate: null },
   { text: "Tap any tile to pick a code letter.", gate: () => { if (selected !== null) { tutFirst = selected; return true; } return false; } },
@@ -791,6 +850,11 @@ document.getElementById("trayClose").onclick = () => closeDialog(document.getEle
 document.getElementById("tutNext").onclick = () => { tutIndex++; renderTutorial(); };
 document.getElementById("statsBtn").onclick = showStats;
 document.getElementById("statsClose").onclick = () => closeDialog(document.getElementById("statsModal"));
+document.getElementById("consentYes").onclick = () => setAnalytics(true);
+document.getElementById("consentNo").onclick = () => setAnalytics(false);
+document.getElementById("shareToggle").onchange = e => setAnalytics(e.target.checked);
+document.getElementById("shareToggle").checked = analyticsOn();
+if (storeGet(CONSENT_KEY) === null) document.getElementById("consent").hidden = false;
 document.getElementById("shareBtn").onclick = () => shareResult();
 
 // First-time visitors get the tutorial automatically. It runs alongside whatever puzzle is showing.
