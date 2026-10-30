@@ -30,6 +30,7 @@
   .tile.open { background:var(--open); color:var(--open-ink); font-weight:400; border-color:#cfcfcf; }
   .tile.done { background:#fff; color:var(--ink); font-weight:800; border-color:var(--ink); }
   .tile.sel { outline:2px solid var(--accent); outline-offset:1px; }
+  .tile.same { background:color-mix(in srgb, var(--accent) 22%, var(--open)); }
   .val { font-size:12px; color:var(--muted); min-height:14px; line-height:14px; }
 
   .entry { display:flex; gap:8px; justify-content:center; align-items:center; }
@@ -77,7 +78,7 @@
   #solvedBox.show { display:block; }
   footer { margin-top:auto; font-size:13px; color:var(--muted); text-align:center; line-height:1.6; }
   footer a { color:var(--muted); }
-  dialog { border:1px solid var(--line); border-radius:12px; max-width:400px; width:calc(100% - 24px); color:var(--ink); }
+  dialog { border:2px solid var(--accent); border-radius:12px; max-width:400px; width:calc(100% - 24px); color:var(--ink); background:var(--paper); padding:16px; }
   dialog::backdrop { background:rgba(0,0,0,.35); }
   dialog h2 { font-size:18px; margin:0 0 8px; }
   dialog p, dialog li { font-size:15px; line-height:1.5; }
@@ -143,13 +144,22 @@
 
   <div id="past" class="past" hidden></div>
 
+  <dialog id="trayModal" aria-labelledby="trayTitle">
+    <h2 id="trayTitle">Letters Used</h2>
+    <p>The column on the right lists the letters you can no longer use.</p>
+    <p><b>Green</b> means you found that letter.</p>
+    <p><b>Red</b> means you've tried it against every open code, so it can't go anywhere.</p>
+    <p>One wrong guess doesn't make a letter red. A letter only appears in the column once it's in use.</p>
+    <p><button id="trayClose" class="primary" type="button">Got it</button></p>
+  </dialog>
+
   <div id="solvedBox">
     <p><b>Solved.</b> <span id="finalScore"></span></p>
     <p id="finalQuote" class="muted"></p>
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.18 (prototype)</div>
+    <div>Build 0.1.0-p3.19 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -461,6 +471,7 @@ function submit() {
     guess = "";
     entry.value = "";
     showAlert(g, `wrong, −${WRONG_PENALTY}`, false);
+    if (tutorialMode && !trayShown) { trayShown = true; openDialog(document.getElementById("trayModal")); }
     shakeEntry();
     entry.focus();
   }
@@ -505,23 +516,36 @@ function showWin() {
 function setMsg(t) { document.getElementById("msg").textContent = t; }
 
 // Tutorial: one step at a time, using the same rules as a real puzzle. No answers are given.
+// Interactive tutorial. A step with gate: null waits for Next. A step with a gate moves on by itself
+// when the player does the thing. tutFirst remembers the first code letter the player picked.
+let tutFirst = null;
+let trayShown = false;      // the Letters Used explanation pops up once, on the first wrong guess in the tutorial
 const TUT_STEPS = [
-  { done: () => selected !== null || revealed.size > 0, text: "Welcome to Cryptadoodle. Every day you get a famous quote or phrase, but all the letters are encrypted. Your job is to work out the message, and score as high as you can along the way." },
-  { done: () => wrongPairs.size > 0 || revealed.size > 0, text: "Tap a tile to pick a code letter, then type your guess in the box and press Guess. Every tile with the same code is the same real letter." },
-  { done: () => revealed.size > 0, text: "A right guess reveals every tile with that code and scores points. A wrong guess costs 1. Each letter can be tried only once per code, so think before you guess." },
-  { done: () => revealed.size === totalCodeLetters(), text: "Points come from rarity and from how much of the word is still hidden. Q and Z are worth the most, so guess the rare letters early, while their words still have many hidden letters. Letters Used on the right shows letters you can no longer use." },
+  { text: "Welcome to Cryptadoodle. Every day you get a famous quote or phrase, but all the letters are encrypted. Your job is to work out the message, and score as high as you can along the way.", gate: null },
+  { text: "Tap any tile to pick a code letter.", gate: () => { if (selected !== null) { tutFirst = selected; return true; } return false; } },
+  { text: "1. Every tile with this code is the same real letter, so they're all highlighted together.", gate: null },
+  { text: "2. Points depend on rarity. Rare letters like Q and Z are worth more. The number under each tile is what that letter is worth right now.", gate: null },
+  { text: "3. Now tap a tile with a different letter.", gate: () => selected !== null && selected !== tutFirst },
+  { text: "4. A letter is worth the hidden letters left in its word, times its rarity. Each reveal lowers the value of the letters in its words, so guess the rare letters early.", gate: null },
+  { text: "Make a real guess now. Type a letter in the box and press Guess, or guess the tile you picked.", gate: () => revealed.size > 0 || wrongPairs.size > 0 },
+  { text: "Keep going and solve the rest of the quote. Your score is under the entry box.", gate: () => revealed.size === totalCodeLetters() },
 ];
 const TUT_END = "That's the game. Back to today's puzzle to play for real. Your progress there is saved.";
+// Dialogs with a fallback for browsers that lack showModal().
+function openDialog(d) { if (d.showModal) d.showModal(); else d.setAttribute("open", ""); }
+function closeDialog(d) { if (d.close) d.close(); else d.removeAttribute("open"); }
+
 // tutIndex only moves forward. A step moves on when its action happens, or when the player taps Next.
 let tutIndex = 0;
 function renderTutorial() {
   const el = document.getElementById("tutorial");
   if (!tutorialMode) { el.style.display = "none"; return; }
   el.style.display = "";
-  while (tutIndex < TUT_STEPS.length && TUT_STEPS[tutIndex].done()) tutIndex++;
+  while (tutIndex < TUT_STEPS.length && TUT_STEPS[tutIndex].gate && TUT_STEPS[tutIndex].gate()) tutIndex++;
   const done = tutIndex >= TUT_STEPS.length;
   document.getElementById("tutText").textContent = done ? TUT_END : TUT_STEPS[tutIndex].text;
-  document.getElementById("tutNext").hidden = done;
+  // Next only on steps that don't wait for an action
+  document.getElementById("tutNext").hidden = done || TUT_STEPS[tutIndex].gate !== null;
 }
 
 // How to play is a separate round. Today's progress is kept aside and restored on exit.
@@ -543,7 +567,7 @@ function restoreState(st) {
 function enterTutorial() {
   if (!tutorialMode) mainSnapshot = puzzle ? snapshotState() : null;
   tutorialMode = true;
-  tutIndex = 0;
+  tutIndex = 0; tutFirst = null; trayShown = false;
   newPuzzle();
 }
 function exitTutorial() {
@@ -589,7 +613,7 @@ function render() {
 
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "tile " + (isDone ? "done" : "open") + (selected === t.cipher ? " sel" : "");
+      b.className = "tile " + (isDone ? "done" : "open") + (selected === t.cipher ? " sel" : "") + (!isDone && selected === t.cipher ? " same" : "");
       b.textContent = isDone ? t.plain : t.cipher;
       b.setAttribute("aria-label", isDone ? `${t.plain}, revealed` : `code letter ${t.cipher}`);
       b.dataset.c = t.cipher;
@@ -672,6 +696,7 @@ document.getElementById("entry").addEventListener("submit", e => {
 document.getElementById("pastBtn").onclick = togglePast;
 document.getElementById("helpBtn").onclick = enterTutorial;
 document.getElementById("tutBack").onclick = exitTutorial;
+document.getElementById("trayClose").onclick = () => closeDialog(document.getElementById("trayModal"));
 document.getElementById("tutNext").onclick = () => { tutIndex++; renderTutorial(); };
 
 newPuzzle(); // shows immediately, so the page works offline
