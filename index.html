@@ -169,7 +169,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.23 (prototype)</div>
+    <div>Build 0.1.0-p3.24 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -659,6 +659,7 @@ function renderTutorial() {
 
 // How to play turns the guide on or off. It works along with today's puzzle.
 function toggleTutorial() {
+  if (!puzzle) return; // still loading
   tutorialMode = !tutorialMode;
   if (!tutorialMode) storeSet(SEEN_KEY, "1");
   tutIndex = 0; tutFirst = null; trayShown = false;
@@ -793,9 +794,10 @@ document.getElementById("shareBtn").onclick = () => shareResult();
 
 // First-time visitors get the tutorial automatically. It runs alongside whatever puzzle is showing.
 tutorialMode = storeGet(SEEN_KEY) !== "1";
-newPuzzle(); // shows immediately, so the page works offline
+// No puzzle until the sheet answers, so a random quote never flashes before today's.
+document.getElementById("board").textContent = "Loading today's puzzle...";
 
-// Then read the sheet. If today's row exists and nothing has been played yet, switch to it.
+// Read the sheet, then build the puzzle: today's quote, a past one from ?day=, or a fallback.
 loadSheetQuotes()
   .then(all => {
     sheetQuotes = all;
@@ -806,13 +808,16 @@ loadSheetQuotes()
     const past = day && day <= today ? all.find(q => q.date === day) : null;
     if (past) {
       pickPast(past);
-    } else if (dailyQuote && score === 0 && revealed.size === 0 && selected === null) {
-      // Nothing played yet, so swap the fallback for today's puzzle. Restart the tutorial with it.
+    } else if (score === 0 && revealed.size === 0 && selected === null) {
+      // Nothing played yet. Restart the tutorial with today's puzzle if it's on.
       if (tutorialMode) { tutIndex = 0; tutFirst = null; trayShown = false; }
       newPuzzle();
     }
   })
-  .catch(err => console.warn("Cryptadoodle: sheet unavailable, using built-in quotes:", err));
+  .catch(err => {
+    console.warn("Cryptadoodle: sheet unavailable, using built-in quotes:", err);
+    if (!puzzle) newPuzzle();
+  });
 </script>
 </body>
 </html>
