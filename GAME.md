@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.13. Not approved for public release.
+Status: prototype, build 0.1.0-p3.14. Not approved for public release.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -62,7 +62,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 
 ## Tutorial
 
-- Built in 0.1.0-p3.10: a Tutorial button starts a short quote (Know thyself) with one step shown at a time.
+- Built in 0.1.0-p3.10: a short quote (Know thyself) with one step shown at a time. Started from How to play.
 - Steps: tap a tile, make a guess, see a reveal, keep going. No answers are given.
 - Same rules as a real puzzle. Scores and max possible are shown when solved.
 
@@ -71,6 +71,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - Playtest 0.1.0-p3.9 and tune scoring values.
 - Small tiles on narrow phones with long words fall below the 44 px tap target. Decide the layout for this.
 - Tutorial: confirm step wording after playtest.
+- Tutorial and How to play are one entry point (How to play button).
 - Sourceword CC BY-SA attribution is unverified. Confirm before any public launch.
 - Word list license: the Wordsummit list is unlicensed in its repo and is not planned for use.
 - Nothing is public until the owner approves a release.
@@ -90,3 +91,4 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.14: How to play and Tutorial are one thing. How to play runs the interactive tutorial, with a blue border.

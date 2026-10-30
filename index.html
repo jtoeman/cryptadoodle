@@ -66,7 +66,7 @@
   /* The entry panel. On a phone with the keyboard up it floats directly above the keyboard. */
   #dockInner { border:2px solid var(--accent); border-radius:12px; background:var(--paper); padding:8px 8px 10px; }
   #dockInner.floating { position:fixed; z-index:5; left:50%; transform:translateX(-50%); bottom:var(--kb,0px); width:min(430px, calc(100% - 16px)); box-shadow:0 -4px 14px rgba(0,0,0,.12); }
-  .tutorial { text-align:center; font-size:15px; color:var(--accent); font-weight:600; min-height:22px; }
+  .tutorial { text-align:center; font-size:15px; color:var(--ink); font-weight:600; min-height:22px; border:2px solid var(--accent); border-radius:12px; background:var(--paper); padding:8px 10px; }
   #solvedBox { display:none; background:#fff; border:1px solid var(--ok); border-radius:10px; padding:12px; text-align:center; }
   #solvedBox.show { display:block; }
   footer { margin-top:auto; font-size:13px; color:var(--muted); text-align:center; line-height:1.6; }
@@ -127,7 +127,6 @@
   <div id="msg" aria-live="polite"></div>
 
   <div class="row">
-    <button id="tutBtn" type="button">Tutorial</button>
     <button id="newBtn" type="button">New puzzle</button>
   </div>
 
@@ -137,7 +136,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.13 (prototype)</div>
+    <div>Build 0.1.0-p3.14 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -145,26 +144,6 @@
     </div>
   </footer>
 </main>
-
-<dialog id="help">
-  <h2>How to play</h2>
-  <ul>
-    <li>Each tile is one letter of a famous quote, shown in code. The same code letter always stands for the same letter.</li>
-    <li>The theme under the score tells you who said it or what it's about.</li>
-    <li>Tap a tile, type its letter in the box, then press Guess or Enter.</li>
-    <li>A correct guess reveals every tile with that code letter, in bold, and scores points.</li>
-    <li>A wrong guess costs 1 point and shows an alert.</li>
-    <li>Points: an unrevealed letter is worth the number of unrevealed letters left in its word, times its Scrabble tile value (rarer letters count more). The current value shows under each grey tile.</li>
-    <li>If a code letter appears in several words, the lowest value among those words is used. You earn that value for each time the letter appears.</li>
-    <li>Example: a 9-letter word with a Z is worth 9 × 10 = 90 per Z. A 1-letter word with an A is worth 1.</li>
-    <li>A letter column appears on the right once a letter can no longer be used. Green = found. Red = tried wrong in every open spot.</li>
-    <li>You can't guess a letter you've already tried for that code, or a letter already found.</li>
-    <li>Tutorial: a short quote with one step at a time, using the same rules.</li>
-    <li>Rule 37: there are no hints in this build.</li>
-  </ul>
-  <p class="muted">Build 0.1.0-p3.13 (prototype)</p>
-  <p><button id="closeHelp" class="primary" type="button">Got it</button></p>
-</dialog>
 
 <script>
 const RARITY = {A:1,B:3,C:3,D:2,E:1,F:4,G:2,H:4,I:1,J:8,K:5,L:1,M:3,N:1,O:1,P:3,Q:10,R:1,S:1,T:1,U:1,V:4,W:4,X:8,Y:4,Z:10};
@@ -472,7 +451,7 @@ function setMsg(t) { document.getElementById("msg").textContent = t; }
 const TUT_STEPS = [
   { done: () => selected !== null || revealed.size > 0, text: "Tap a tile to pick a code letter." },
   { done: () => wrongPairs.size > 0 || revealed.size > 0, text: "Type a letter in the box and press Guess. A wrong guess costs 1." },
-  { done: () => revealed.size > 0, text: "A right guess reveals every tile with that code letter and scores points." },
+  { done: () => revealed.size > 0, text: "A right guess reveals every tile with that code letter and scores points. An unrevealed letter is worth the letters left in its word times its tile value." },
   { done: () => revealed.size === totalCodeLetters(), text: "Keep going. Letters Used on the right shows letters you can't use anymore." }
 ];
 function renderTutorial() {
@@ -601,9 +580,7 @@ document.getElementById("entry").addEventListener("submit", e => {
 });
 
 document.getElementById("newBtn").onclick = () => { tutorialMode = false; randomMode = true; newPuzzle(); };
-document.getElementById("tutBtn").onclick = () => { tutorialMode = true; newPuzzle(); };
-document.getElementById("helpBtn").onclick = () => document.getElementById("help").showModal();
-document.getElementById("closeHelp").onclick = () => document.getElementById("help").close();
+document.getElementById("helpBtn").onclick = () => { tutorialMode = true; newPuzzle(); };
 
 newPuzzle(); // shows immediately, so the page works offline
 
