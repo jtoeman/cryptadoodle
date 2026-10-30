@@ -1,0 +1,23 @@
+name: Publish to Froobaloo
+
+# Cryptadoodle is served at https://froobaloo.com/cryptadoodle/ by the jtoeman/froobaloo
+# hub repo, which copies this repo's files straight from `main`. This asks the hub to
+# rebuild after each push, so changes go live in a couple of minutes.
+# Needs the HUB_TOKEN secret (the shared froobaloo-hub token).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask the Froobaloo hub to rebuild
+        env:
+          GH_TOKEN: ${{ secrets.HUB_TOKEN }}
+        run: gh api repos/jtoeman/froobaloo/dispatches -f event_type=game-updated -f "client_payload[game]=cryptadoodle"
