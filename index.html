@@ -159,7 +159,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.21 (prototype)</div>
+    <div>Build 0.1.0-p3.22 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -184,6 +184,12 @@ const QUOTES = [
 const SHEET_ID = "1x6s2B4He9OoMUQgSuK1Rm3Ag7QWJ_ZuvaygkUGn_POo";
 const SHEET_TAB = "Cryptadoodle";
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+// Per-device storage. Private windows or blocked storage just mean no memory between visits.
+const SEEN_KEY = "cryptadoodle.tutSeen";
+const DAYS_KEY = "cryptadoodle.days";
+function storeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function storeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } }
 
 let quoteIdx = -1;
 let puzzle = null;      // { quote, theme, words: [[{plain, cipher}]], dec }
@@ -566,6 +572,7 @@ function renderTutorial() {
 // How to play turns the guide on or off. It works along with today's puzzle.
 function toggleTutorial() {
   tutorialMode = !tutorialMode;
+  if (!tutorialMode) storeSet(SEEN_KEY, "1");
   tutIndex = 0; tutFirst = null; trayShown = false;
   render();
 }
@@ -689,10 +696,12 @@ document.getElementById("entry").addEventListener("submit", e => {
 
 document.getElementById("pastBtn").onclick = togglePast;
 document.getElementById("helpBtn").onclick = toggleTutorial;
-document.getElementById("tutDone").onclick = () => { tutorialMode = false; render(); };
+document.getElementById("tutDone").onclick = () => { tutorialMode = false; storeSet(SEEN_KEY, "1"); render(); };
 document.getElementById("trayClose").onclick = () => closeDialog(document.getElementById("trayModal"));
 document.getElementById("tutNext").onclick = () => { tutIndex++; renderTutorial(); };
 
+// First-time visitors get the tutorial automatically. It runs alongside whatever puzzle is showing.
+tutorialMode = storeGet(SEEN_KEY) !== "1";
 newPuzzle(); // shows immediately, so the page works offline
 
 // Then read the sheet. If today's row exists and nothing has been played yet, switch to it.
@@ -706,7 +715,9 @@ loadSheetQuotes()
     const past = day && day <= today ? all.find(q => q.date === day) : null;
     if (past) {
       pickPast(past);
-    } else if (dailyQuote && !tutorialMode && score === 0 && revealed.size === 0 && selected === null) {
+    } else if (dailyQuote && score === 0 && revealed.size === 0 && selected === null) {
+      // Nothing played yet, so swap the fallback for today's puzzle. Restart the tutorial with it.
+      if (tutorialMode) { tutIndex = 0; tutFirst = null; trayShown = false; }
       newPuzzle();
     }
   })
