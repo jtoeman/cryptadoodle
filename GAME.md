@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.22. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
+Status: prototype, build 0.1.0-p3.23. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -93,6 +93,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.23: Stats (played, solved, current and best streak, best score) kept on the device. Share result after a solve, with the score and link but no quote.
 - 0.1.0-p3.22: first-time visitors get the tutorial automatically. Done or How to play turns it off, and it stays off on return visits (stored on the device).
 - 0.1.0-p3.21: connected to the shared sheet (Cryptadoodle tab). Dates without a year (10/20) get the nearest year to today.
 - 0.1.0-p3.20: the tutorial works along with today's puzzle (no separate quote, no Back button). How to play toggles it on and off.

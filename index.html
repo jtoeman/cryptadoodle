@@ -84,6 +84,7 @@
   dialog p, dialog li { font-size:15px; line-height:1.5; }
   dialog ul { padding-left:20px; margin:8px 0; }
   .muted { color:var(--muted); font-size:13px; }
+  .statRow { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line); }
   @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
 </style>
 </head>
@@ -140,6 +141,7 @@
 
   <div class="row">
     <button id="pastBtn" type="button">Past puzzles</button>
+    <button id="statsBtn" type="button">Stats</button>
   </div>
 
   <div id="past" class="past" hidden></div>
@@ -153,13 +155,21 @@
     <p><button id="trayClose" class="primary" type="button">Got it</button></p>
   </dialog>
 
+  <dialog id="statsModal" aria-labelledby="statsTitle">
+    <h2 id="statsTitle">Your stats</h2>
+    <div id="statsBody"></div>
+    <p class="muted">Stats are kept on this device only.</p>
+    <p><button id="statsClose" class="primary" type="button">Close</button></p>
+  </dialog>
+
   <div id="solvedBox">
     <p><b>Solved.</b> <span id="finalScore"></span></p>
     <p id="finalQuote" class="muted"></p>
+    <p><button id="shareBtn" class="primary" type="button">Share result</button> <span id="shareMsg" class="muted"></span></p>
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.22 (prototype)</div>
+    <div>Build 0.1.0-p3.23 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -349,6 +359,7 @@ function newPuzzle() {
   LETTERS.forEach((p, i) => { enc[p] = perm[i]; dec[perm[i]] = p; });
   puzzle = {
     quote: q.text,
+    date: q.date || null,
     theme: q.theme || "",
     words: words.map(w => [...w].map(p => ({ plain: p, cipher: enc[p] }))),
     dec
@@ -360,6 +371,7 @@ function newPuzzle() {
   score = 0;
   entry.value = "";
   document.getElementById("solvedBox").classList.remove("show");
+  document.getElementById("shareMsg").textContent = "";
   hideAlert();
   setMsg("");
   render();
@@ -495,6 +507,7 @@ function submit() {
     shakeEntry();
     entry.focus();
   }
+  recordProgress(revealed.size === totalCodeLetters());
   render();
 }
 
@@ -531,6 +544,81 @@ function showWin() {
   document.getElementById("solvedBox").classList.add("show");
   document.getElementById("finalScore").textContent = `Score ${score}. Max possible: ${maxPossible()}.`;
   document.getElementById("finalQuote").textContent = `"${puzzle.quote}"`;
+}
+
+// ---- Stats and sharing. Kept on this device only (no accounts yet). Dated puzzles only. ----
+function loadDays() {
+  try { return JSON.parse(storeGet(DAYS_KEY) || "{}") || {}; } catch (e) { return {}; }
+}
+function shiftDay(iso, n) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+// Called after every guess. solved is true when the last code letter has been found.
+function recordProgress(solved) {
+  if (!puzzle || !puzzle.date) return;
+  const days = loadDays();
+  const cur = days[puzzle.date] || { solved: false, score: 0, max: 0 };
+  cur.score = score;
+  if (solved) { cur.solved = true; cur.max = maxPossible(); }
+  days[puzzle.date] = cur;
+  storeSet(DAYS_KEY, JSON.stringify(days));
+}
+function computeStats() {
+  const days = loadDays();
+  const keys = Object.keys(days).sort();
+  const solvedKeys = keys.filter(k => days[k].solved);
+  let best = 0, bestStreak = 0, run = 0, prev = null;
+  solvedKeys.forEach(k => {
+    run = prev && shiftDay(prev, 1) === k ? run + 1 : 1;
+    prev = k;
+    bestStreak = Math.max(bestStreak, run);
+    best = Math.max(best, days[k].score);
+  });
+  // Current streak counts back from today, or from yesterday if today isn't solved yet.
+  let cur = 0;
+  let d = todayNY();
+  if (!(days[d] && days[d].solved)) d = shiftDay(d, -1);
+  while (days[d] && days[d].solved) { cur++; d = shiftDay(d, -1); }
+  return { played: keys.length, solved: solvedKeys.length, cur, bestStreak, best };
+}
+function showStats() {
+  const s = computeStats();
+  const pct = s.played ? Math.round(100 * s.solved / s.played) : 0;
+  const rows = [
+    ["Played", s.played],
+    ["Solved", `${s.solved} (${pct}%)`],
+    ["Current streak", s.cur],
+    ["Best streak", s.bestStreak],
+    ["Best score", s.best]
+  ];
+  const body = document.getElementById("statsBody");
+  body.textContent = "";
+  rows.forEach(([label, val]) => {
+    const row = document.createElement("div");
+    row.className = "statRow";
+    const a = document.createElement("span"); a.textContent = label;
+    const b = document.createElement("b"); b.textContent = String(val);
+    row.append(a, b);
+    body.append(row);
+  });
+  openDialog(document.getElementById("statsModal"));
+}
+// The share text never includes the quote, so it can't spoil anyone's puzzle.
+function shareText() {
+  const url = location.origin + location.pathname;
+  const when = puzzle.date ? ` · ${fmtDate(puzzle.date)}` : "";
+  return `Cryptadoodle${when}\nSolved. Score ${score} of ${maxPossible()} possible.\n${url}`;
+}
+async function shareResult() {
+  const text = shareText();
+  const msg = document.getElementById("shareMsg");
+  if (navigator.share) {
+    try { await navigator.share({ text }); msg.textContent = ""; return; }
+    catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  try { await navigator.clipboard.writeText(text); msg.textContent = "Copied to clipboard."; }
+  catch (e) { msg.textContent = "Couldn't copy. Your result: " + text; }
 }
 
 function setMsg(t) { document.getElementById("msg").textContent = t; }
@@ -699,6 +787,9 @@ document.getElementById("helpBtn").onclick = toggleTutorial;
 document.getElementById("tutDone").onclick = () => { tutorialMode = false; storeSet(SEEN_KEY, "1"); render(); };
 document.getElementById("trayClose").onclick = () => closeDialog(document.getElementById("trayModal"));
 document.getElementById("tutNext").onclick = () => { tutIndex++; renderTutorial(); };
+document.getElementById("statsBtn").onclick = showStats;
+document.getElementById("statsClose").onclick = () => closeDialog(document.getElementById("statsModal"));
+document.getElementById("shareBtn").onclick = () => shareResult();
 
 // First-time visitors get the tutorial automatically. It runs alongside whatever puzzle is showing.
 tutorialMode = storeGet(SEEN_KEY) !== "1";
