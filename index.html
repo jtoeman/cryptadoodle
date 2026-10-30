@@ -73,12 +73,13 @@
   .past { border:2px solid var(--accent); border-radius:12px; padding:8px; display:flex; flex-direction:column; gap:6px; max-height:50vh; overflow-y:auto; background:var(--paper); }
   .past[hidden] { display:none; }
   .pastItem { text-align:left; min-height:44px; }
-  .tutorial { font-size:15px; line-height:1.45; color:var(--ink); border:2px solid var(--accent); border-radius:12px; background:var(--paper); padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
+  .tutorial { font-size:15px; line-height:1.45; color:var(--on-accent); border:2px solid var(--accent); border-radius:12px; background:var(--accent); padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
   .tutorial p { margin:0; }
+  .tutorial button.primary { background:var(--paper); color:var(--ink); border-color:var(--paper); }
   /* Desktop: the tutorial sits in the middle of the screen. The card lets clicks through to the
      tiles underneath; only its buttons take clicks, so the tiles it asks for stay usable. */
   @media (min-width: 720px) {
-    #tutorial.tutorial { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:min(460px, calc(100% - 48px)); z-index:20; pointer-events:none; background:rgba(15,20,28,.94); box-shadow:0 8px 28px rgba(0,0,0,.5); }
+    #tutorial.tutorial { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:min(460px, calc(100% - 48px)); z-index:20; pointer-events:none; box-shadow:0 8px 28px rgba(0,0,0,.5); }
     #tutorial .tutBtns { pointer-events:auto; }
   }
   .tutBtns { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
@@ -188,7 +189,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.31 (prototype)</div>
+    <div>Build 0.1.0-p3.32 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -767,7 +768,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.31", event_properties: props || {}
+        platform: "Web", app_version: "0.1.0-p3.32", event_properties: props || {}
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
