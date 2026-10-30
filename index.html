@@ -63,6 +63,9 @@
 
   .row { display:flex; justify-content:flex-end; align-items:center; gap:8px; }
   #msg { min-height:24px; text-align:center; font-size:15px; }
+  /* The entry panel. On a phone with the keyboard up it floats directly above the keyboard. */
+  #dockInner { border:2px solid var(--accent); border-radius:12px; background:var(--paper); padding:8px 8px 10px; }
+  #dockInner.floating { position:fixed; z-index:5; left:50%; transform:translateX(-50%); bottom:var(--kb,0px); width:min(430px, calc(100% - 16px)); box-shadow:0 -4px 14px rgba(0,0,0,.12); }
   .tutorial { text-align:center; font-size:15px; color:var(--accent); font-weight:600; min-height:22px; }
   #solvedBox { display:none; background:#fff; border:1px solid var(--ok); border-radius:10px; padding:12px; text-align:center; }
   #solvedBox.show { display:block; }
@@ -93,6 +96,8 @@
   <div class="play">
   <section id="board" aria-label="Puzzle"></section>
 
+  <div id="dock">
+  <div id="dockInner">
   <div id="selinfo" aria-live="polite"></div>
 
   <form id="entry" class="entry" autocomplete="off">
@@ -101,6 +106,8 @@
            aria-label="Your letter guess">
     <button id="guessBtn" class="primary" type="button" disabled>Guess</button>
   </form>
+  </div>
+  </div>
 
   <div id="scorebar">
     <span class="label">Score</span>
@@ -130,7 +137,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.12 (prototype)</div>
+    <div>Build 0.1.0-p3.13 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -155,7 +162,7 @@
     <li>Tutorial: a short quote with one step at a time, using the same rules.</li>
     <li>Rule 37: there are no hints in this build.</li>
   </ul>
-  <p class="muted">Build 0.1.0-p3.12 (prototype)</p>
+  <p class="muted">Build 0.1.0-p3.13 (prototype)</p>
   <p><button id="closeHelp" class="primary" type="button">Got it</button></p>
 </dialog>
 
@@ -322,6 +329,7 @@ function select(c) {
   render();
   entry.focus();
   keepSelectedVisible();
+  [150, 400, 800].forEach(ms => setTimeout(updateDock, ms));
 }
 
 // On phones the keyboard shrinks the screen and the browser can scroll the selected tile out of view.
@@ -339,6 +347,28 @@ if (window.visualViewport) {
     if (selected) requestAnimationFrame(keepSelectedVisible);
   });
 }
+
+// Float the entry panel just above the phone keyboard while a tile is picked.
+const dock = document.getElementById("dock");
+const dockInner = document.getElementById("dockInner");
+function updateDock() {
+  const vv = window.visualViewport;
+  const kb = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
+  document.documentElement.style.setProperty("--kb", kb + "px");
+  const open = kb > 80 && selected !== null;
+  if (open && !dockInner.classList.contains("floating")) {
+    dock.style.height = dockInner.offsetHeight + "px"; // keep the space so the page doesn't jump
+    dockInner.classList.add("floating");
+  } else if (!open && dockInner.classList.contains("floating")) {
+    dockInner.classList.remove("floating");
+    dock.style.height = "";
+  }
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", () => { updateDock(); if (selected) requestAnimationFrame(keepSelectedVisible); });
+  window.visualViewport.addEventListener("scroll", updateDock);
+}
+entry.addEventListener("blur", () => setTimeout(updateDock, 300));
 
 function showAlert(letter, detail, good) {
   const a = document.getElementById("alert");
@@ -560,7 +590,7 @@ entry.addEventListener("input", () => {
 // Guess works from a plain click and from Enter; no reliance on form submit.
 guessBtn.addEventListener("click", () => submit());
 entry.addEventListener("focus", () => {
-  [150, 400, 800].forEach(ms => setTimeout(keepSelectedVisible, ms));
+  [150, 400, 800].forEach(ms => setTimeout(() => { keepSelectedVisible(); updateDock(); }, ms));
 });
 entry.addEventListener("keydown", e => {
   if (e.key === "Enter") { e.preventDefault(); submit(); }
