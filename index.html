@@ -59,10 +59,10 @@
   #trayHead { flex:0 0 64px; width:64px; font-size:12px; color:var(--muted); line-height:1.2; text-align:center; margin-top:2px; }
   .chip { display:inline-flex; align-items:center; justify-content:center; width:26px; height:30px; border:1px solid var(--ink); border-radius:6px; background:var(--panel); color:var(--ink); font-weight:800; font-size:16px; vertical-align:middle; }
   #trayWrap.show { display:block; }
-  #tray { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  #tray { display:flex; flex-wrap:wrap; justify-content:center; width:64px; gap:4px; }
   #tray span { display:flex; align-items:center; justify-content:center; width:26px; height:30px; border-radius:5px; font-weight:700; font-size:13px; font-family:var(--mono); background:var(--open); color:var(--open-ink); }
   #tray span.good { background:var(--ok); color:var(--on-ok); }
-  #tray span.bad { background:var(--bad); color:var(--on-bad); }
+  #tray span.grey { background:var(--line); color:var(--ink); }
   #tray-label { font-size:12px; color:var(--muted); text-align:center; }
 
   .row { display:flex; justify-content:flex-end; align-items:center; gap:8px; }
@@ -151,10 +151,9 @@
 
   <dialog id="trayModal" aria-labelledby="trayTitle">
     <h2 id="trayTitle">Letters Used</h2>
-    <p>The column on the right lists the letters you can no longer use.</p>
-    <p><b>Green</b> means you found that letter.</p>
-    <p><b>Red</b> means you've tried it against every open code, so it can't go anywhere.</p>
-    <p>One wrong guess doesn't make a letter red. A letter only appears in the column once it's in use.</p>
+    <p>The column on the right lists every letter you've guessed, right or wrong.</p>
+    <p><b>Green</b> means that letter is in the quote.</p>
+    <p><b>Grey</b> means it isn't.</p>
     <p><button id="trayClose" class="primary" type="button">Got it</button></p>
   </dialog>
 
@@ -172,7 +171,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.25 (prototype)</div>
+    <div>Build 0.1.0-p3.26 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -736,21 +735,16 @@ function render() {
     info.textContent = revealed.size === totalCodeLetters() ? "" : "Tap a tile to start.";
   }
 
-  // letter tray: hidden until a guess is made; then only letters in use (found or tried).
-  // green = found; red = tried against every still-open code letter; grey = tried.
-  const found = foundPlain();
-  const open = [...new Set(puzzle.words.flat().map(t => t.cipher))].filter(c => !revealed.has(c));
-  // only letters that can no longer be used: found, or tried wrong in every open spot
-  const letters = [...new Set(puzzle.words.flat().map(t => t.plain))];
-  const unavailable = letters
-    .filter(l => found.has(l) || (open.length > 0 && open.every(c => wrongPairs.has(c + l))))
-    .sort();
+  // letter tray: every letter guessed so far (right or wrong). green = the letter is in the quote; grey = it isn't.
+  const used = new Set([...wrongPairs].map(k => k[1]));
+  foundPlain().forEach(l => used.add(l));
+  const inQuote = new Set(puzzle.words.flat().map(t => t.plain));
   const tray = document.getElementById("tray");
   tray.innerHTML = "";
-  unavailable.forEach(l => {
+  [...used].sort().forEach(l => {
     const s = document.createElement("span");
     s.textContent = l;
-    s.className = found.has(l) ? "good" : "bad";
+    s.className = inQuote.has(l) ? "good" : "grey";
     tray.appendChild(s);
   });
 }
