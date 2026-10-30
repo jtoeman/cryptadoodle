@@ -130,7 +130,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.10 (prototype)</div>
+    <div>Build 0.1.0-p3.11 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -155,7 +155,7 @@
     <li>Tutorial: a short quote with one step at a time, using the same rules.</li>
     <li>Rule 37: there are no hints in this build.</li>
   </ul>
-  <p class="muted">Build 0.1.0-p3.10 (prototype)</p>
+  <p class="muted">Build 0.1.0-p3.11 (prototype)</p>
   <p><button id="closeHelp" class="primary" type="button">Got it</button></p>
 </dialog>
 
@@ -171,6 +171,10 @@ const QUOTES = [
 ];
 // short quote used by the interactive tutorial
 const TUTORIAL = { text: "Know thyself", theme: "Ancient Greek maxim" };
+// Shared Google Sheet (froobaloodb), tab "Cryptadoodle": columns Date, Quote, Theme, Status.
+// Read in the browser the same way Sourceword reads its tab. QUOTES is the fallback.
+const SHEET_ID = "1x6s2B4He9OoMUQgSuK1Rm3Ag7QWJ_ZuvaygkUGn_POo";
+const SHEET_TAB = "Cryptadoodle";
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 let quoteIdx = -1;
@@ -182,6 +186,9 @@ let guess = "";
 let score = 0;
 let alertTimer = null;
 let tutorialMode = false;
+let randomMode = false;     // true after "New puzzle": draw from the sheet at random
+let sheetQuotes = [];       // rows from the sheet: { date: "YYYY-MM-DD" | null, text, theme }
+let dailyQuote = null;      // today's row from the sheet, if there is one
 
 const entry = document.getElementById("entryBox");
 const guessBtn = document.getElementById("guessBtn");
@@ -194,13 +201,72 @@ function shuffle(a) {
   return a;
 }
 
+// Minimal CSV parser (quoted fields, embedded commas), as used by Sourceword.
+function parseCsv(text) {
+  const rows = [];
+  let row = [], field = "", inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQ = false; }
+      else field += ch;
+    } else if (ch === '"') inQ = true;
+    else if (ch === ",") { row.push(field); field = ""; }
+    else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i++;
+      row.push(field); rows.push(row); row = []; field = "";
+    } else field += ch;
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+// Today's date in New York, as YYYY-MM-DD, to match the sheet's dates.
+function todayNY() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+}
+
+// Sheet dates look like 9/23/2026.
+function parseSheetDate(s) {
+  const m = s.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  return m ? `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}` : null;
+}
+
+async function loadSheetQuotes() {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const res = await fetch(url, { signal: ctl.signal, cache: "no-cache" });
+    if (!res.ok) throw new Error("sheet HTTP " + res.status);
+    const all = parseCsv(await res.text());
+    const header = (all[0] || []).map(h => h.trim().toLowerCase());
+    if (!header.includes("quote")) throw new Error("sheet: Cryptadoodle tab not found");
+    const iDate = header.indexOf("date"), iQuote = header.indexOf("quote"), iTheme = header.indexOf("theme");
+    const out = [];
+    for (const r of all.slice(1)) {
+      const text = (r[iQuote] || "").trim();
+      if (text) out.push({ date: iDate >= 0 ? parseSheetDate(r[iDate] || "") : null, text, theme: iTheme >= 0 ? (r[iTheme] || "").trim() : "" });
+    }
+    if (!out.length) throw new Error("sheet: no usable rows");
+    return out;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function newPuzzle() {
   let q = TUTORIAL;
   if (!tutorialMode) {
-    let next;
-    do { next = Math.floor(Math.random() * QUOTES.length); } while (QUOTES.length > 1 && next === quoteIdx);
-    quoteIdx = next;
-    q = QUOTES[quoteIdx];
+    if (!randomMode && dailyQuote) {
+      q = dailyQuote;
+    } else {
+      const pool = sheetQuotes.length ? sheetQuotes : QUOTES;
+      let next;
+      do { next = Math.floor(Math.random() * pool.length); } while (pool.length > 1 && next === quoteIdx);
+      quoteIdx = next;
+      q = pool[quoteIdx];
+    }
   }
   const words = q.text.toUpperCase().match(/[A-Z]+/g);
   // no letter may stand for itself: redraw until the permutation has no fixed points
@@ -484,12 +550,21 @@ document.getElementById("entry").addEventListener("submit", e => {
   submit();
 });
 
-document.getElementById("newBtn").onclick = () => { tutorialMode = false; newPuzzle(); };
+document.getElementById("newBtn").onclick = () => { tutorialMode = false; randomMode = true; newPuzzle(); };
 document.getElementById("tutBtn").onclick = () => { tutorialMode = true; newPuzzle(); };
 document.getElementById("helpBtn").onclick = () => document.getElementById("help").showModal();
 document.getElementById("closeHelp").onclick = () => document.getElementById("help").close();
 
-newPuzzle();
+newPuzzle(); // shows immediately, so the page works offline
+
+// Then read the sheet. If today's row exists and nothing has been played yet, switch to it.
+loadSheetQuotes()
+  .then(all => {
+    sheetQuotes = all;
+    dailyQuote = all.find(q => q.date === todayNY()) || null;
+    if (dailyQuote && !tutorialMode && score === 0 && revealed.size === 0 && selected === null) newPuzzle();
+  })
+  .catch(err => console.warn("Cryptadoodle: sheet unavailable, using built-in quotes:", err));
 </script>
 </body>
 </html>

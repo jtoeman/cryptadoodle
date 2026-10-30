@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.10. Not approved for public release.
+Status: prototype, build 0.1.0-p3.11. Not approved for public release.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -54,7 +54,11 @@ Players guess the real letter behind a code letter. Every tile with that code le
 ## Quotes
 
 - Prototype set: To be or not to be (Shakespeare, Hamlet); Knowledge is power (Francis Bacon); Where there is a will, there is a way (Proverb); Stay hungry, stay foolish (Whole Earth Catalog).
-- A curator picks each day's phrase. Daily selection is not built yet.
+- Source: the shared Google Sheet (froobaloodb), tab "Cryptadoodle", columns Date, Quote, Theme, Status. Same sheet as Sourceword and the other games.
+- The game reads the tab in the browser (gviz CSV, as Sourceword does) and uses today's row (New York date) as the daily quote.
+- New puzzle draws a random row from the tab.
+- If the sheet is unreachable or the tab is missing, the built-in prototype quotes are used.
+- Status is not read yet. Planned use: mark rows Ready or Used.
 
 ## Tutorial
 
@@ -67,7 +71,6 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - Playtest 0.1.0-p3.9 and tune scoring values.
 - Small tiles on narrow phones with long words fall below the 44 px tap target. Decide the layout for this.
 - Tutorial: confirm step wording after playtest.
-- Daily quote selection and scheduling.
 - Sourceword CC BY-SA attribution is unverified. Confirm before any public launch.
 - Word list license: the Wordsummit list is unlicensed in its repo and is not planned for use.
 - Nothing is public until the owner approves a release.
@@ -84,3 +87,4 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.8: words never wrap, tiles shrink to fit.
 - 0.1.0-p3.9: Letters Used header at theme level, narrow column, no self-mapping.
 - 0.1.0-p3.10: interactive tutorial on a short quote.
+- 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
