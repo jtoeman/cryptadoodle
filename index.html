@@ -182,7 +182,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.29 (prototype)</div>
+    <div>Build 0.1.0-p3.30 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -634,17 +634,71 @@ function showStats() {
 }
 // The share text never includes the quote, so it can't spoil anyone's puzzle.
 function shareText() {
-  const url = location.origin + location.pathname;
+  const base = location.origin + location.pathname;
+  const url = puzzle.date ? `${base}?day=${puzzle.date}` : base;
   const when = puzzle.date ? ` · ${fmtDate(puzzle.date)}` : "";
   return `Cryptadoodle${when}\nSolved. Score ${score} of ${maxPossible()} possible.\n${url}`;
 }
+
+// Share image: the cipher board only (no quote, theme, mapping or score).
+// Drawn from the live puzzle, so it matches what the player solved.
+function shareImage() {
+  const TILE = 56, GAP = 8, WGAP = 28, M = 20, MAXW = 1160, ROWH = TILE + 30, SCALE = 2;
+  const cvs = document.createElement("canvas");
+  const ctx = cvs.getContext("2d");
+  if (!ctx) return Promise.resolve(null);
+  ctx.font = `bold 30px "JetBrains Mono", ui-monospace, monospace`;
+  const wordW = w => w.length * TILE + (w.length - 1) * GAP;
+  const rows = []; let cur = [], curW = 0;
+  for (const w of puzzle.words) {
+    const ww = wordW(w);
+    const add = cur.length ? curW + WGAP + ww : ww;
+    if (add > MAXW && cur.length) { rows.push(cur); cur = [w]; curW = ww; }
+    else { cur.push(w); curW = add; }
+  }
+  if (cur.length) rows.push(cur);
+  const rowWs = rows.map(r => r.reduce((a, w) => a + wordW(w), 0) + WGAP * (r.length - 1));
+  const W = Math.max(...rowWs) + 2 * M;
+  const H = rows.length * ROWH - (ROWH - TILE) + 2 * M;
+  cvs.width = W * SCALE; cvs.height = H * SCALE;
+  ctx.scale(SCALE, SCALE);
+  ctx.fillStyle = "#0f141c"; ctx.fillRect(0, 0, W, H);
+  let y = M;
+  rows.forEach((r, i) => {
+    let x = (W - rowWs[i]) / 2;
+    for (const w of r) {
+      for (const t of w) {
+        ctx.fillStyle = "#211a2c";
+        ctx.strokeStyle = "#33283f"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.roundRect(x, y, TILE, TILE, 9); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#f1eaf7";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(t.cipher, x + TILE / 2, y + TILE / 2 + 1);
+        x += TILE + GAP;
+      }
+      x += WGAP - GAP;
+    }
+    y += ROWH;
+  });
+  return new Promise(res => cvs.toBlob(b => res(b), "image/png"));
+}
+
 async function shareResult() {
   const text = shareText();
   track("share_clicked", { date: puzzle.date });
   const msg = document.getElementById("shareMsg");
+  let blob = null;
+  try { blob = await shareImage(); } catch (e) { blob = null; }
   if (navigator.share) {
-    try { await navigator.share({ text }); msg.textContent = ""; return; }
-    catch (e) { if (e && e.name === "AbortError") return; }
+    try {
+      if (blob) {
+        const file = new File([blob], `cryptadoodle-${puzzle.date || "today"}.png`, { type: "image/png" });
+        if (!navigator.canShare || navigator.canShare({ files: [file] })) {
+          await navigator.share({ text, files: [file] }); msg.textContent = ""; return;
+        }
+      }
+      await navigator.share({ text }); msg.textContent = ""; return;
+    } catch (e) { if (e && e.name === "AbortError") return; }
   }
   try { await navigator.clipboard.writeText(text); msg.textContent = "Copied to clipboard."; }
   catch (e) { msg.textContent = "Couldn't copy. Your result: " + text; }
@@ -679,7 +733,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.29", event_properties: props || {}
+        platform: "Web", app_version: "0.1.0-p3.30", event_properties: props || {}
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
