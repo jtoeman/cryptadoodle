@@ -72,7 +72,7 @@
   .pastItem { text-align:left; min-height:44px; }
   .tutorial { font-size:15px; line-height:1.45; color:var(--ink); border:2px solid var(--accent); border-radius:12px; background:var(--paper); padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
   .tutorial p { margin:0; }
-  #tutBack { align-self:center; }
+  .tutBtns { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
   #solvedBox { display:none; background:#fff; border:1px solid var(--ok); border-radius:10px; padding:12px; text-align:center; }
   #solvedBox.show { display:block; }
   footer { margin-top:auto; font-size:13px; color:var(--muted); text-align:center; line-height:1.6; }
@@ -104,7 +104,10 @@
 
   <div id="tutorial" class="tutorial" style="display:none">
     <p id="tutText"></p>
-    <button id="tutBack" type="button">Back to today's puzzle</button>
+    <div class="tutBtns">
+      <button id="tutNext" class="primary" type="button">Next</button>
+      <button id="tutBack" type="button">Back to today's puzzle</button>
+    </div>
   </div>
   <div id="dock">
   <div id="dockInner">
@@ -146,7 +149,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.17 (prototype)</div>
+    <div>Build 0.1.0-p3.18 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -509,12 +512,16 @@ const TUT_STEPS = [
   { done: () => revealed.size === totalCodeLetters(), text: "Points come from rarity and from how much of the word is still hidden. Q and Z are worth the most, so guess the rare letters early, while their words still have many hidden letters. Letters Used on the right shows letters you can no longer use." },
 ];
 const TUT_END = "That's the game. Back to today's puzzle to play for real. Your progress there is saved.";
+// tutIndex only moves forward. A step moves on when its action happens, or when the player taps Next.
+let tutIndex = 0;
 function renderTutorial() {
   const el = document.getElementById("tutorial");
   if (!tutorialMode) { el.style.display = "none"; return; }
   el.style.display = "";
-  const step = TUT_STEPS.find(s => !s.done());
-  document.getElementById("tutText").textContent = step ? step.text : TUT_END;
+  while (tutIndex < TUT_STEPS.length && TUT_STEPS[tutIndex].done()) tutIndex++;
+  const done = tutIndex >= TUT_STEPS.length;
+  document.getElementById("tutText").textContent = done ? TUT_END : TUT_STEPS[tutIndex].text;
+  document.getElementById("tutNext").hidden = done;
 }
 
 // How to play is a separate round. Today's progress is kept aside and restored on exit.
@@ -536,6 +543,7 @@ function restoreState(st) {
 function enterTutorial() {
   if (!tutorialMode) mainSnapshot = puzzle ? snapshotState() : null;
   tutorialMode = true;
+  tutIndex = 0;
   newPuzzle();
 }
 function exitTutorial() {
@@ -664,6 +672,7 @@ document.getElementById("entry").addEventListener("submit", e => {
 document.getElementById("pastBtn").onclick = togglePast;
 document.getElementById("helpBtn").onclick = enterTutorial;
 document.getElementById("tutBack").onclick = exitTutorial;
+document.getElementById("tutNext").onclick = () => { tutIndex++; renderTutorial(); };
 
 newPuzzle(); // shows immediately, so the page works offline
 
