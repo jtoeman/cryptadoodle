@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.15. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
+Status: prototype, build 0.1.0-p3.16. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -46,7 +46,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 ## Layout
 
 - Mobile first: 375 to 430 px. No horizontal scroll.
-- Words never wrap. Tiles shrink to fit the longest word in the quote.
+- Words never wrap. Tiles are as large as fits the longest word, up to 40 px, and resize with the window.
 - Order: theme, board, code line, guess box, score, last guess, New puzzle.
 - Last guess shows the guessed letter as a tile, then the result: "right, +N" or "wrong, −1".
 - Footer: build number, JeremyToeman.com, Ko-fi, Froobaloo.
@@ -54,11 +54,12 @@ Players guess the real letter behind a code letter. Every tile with that code le
 ## Quotes
 
 - Prototype set: To be or not to be (Shakespeare, Hamlet); Knowledge is power (Francis Bacon); Where there is a will, there is a way (Proverb); Stay hungry, stay foolish (Whole Earth Catalog).
-- Source: the shared Google Sheet (froobaloodb), tab "Cryptadoodle", columns Date, Quote, Theme, Status. Same sheet as Sourceword and the other games.
+- Source: the shared Google Sheet (froobaloodb), tab "Cryptadoodle", columns Date, Quote, Theme. A quote belongs to its date. There is no status.
 - The game reads the tab in the browser (gviz CSV, as Sourceword does) and uses today's row (New York date) as the daily quote.
-- New puzzle draws a random row from the tab.
+- Past puzzles: a list of every quote dated today or earlier, newest first. Future dates are never listed or played.
+- ?day=YYYY-MM-DD opens that past puzzle directly.
 - If the sheet is unreachable or the tab is missing, the built-in prototype quotes are used.
-- Status is not read yet. Planned use: mark rows Ready or Used.
+- Open issue: the whole tab is downloaded to the page, so future rows can be read by anyone who looks at the network response. See the open items.
 
 ## Tutorial
 
@@ -72,6 +73,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - Small tiles on narrow phones with long words fall below the 44 px tap target. Decide the layout for this.
 - Tutorial: confirm step wording after playtest.
 - Tutorial and How to play are one entry point (How to play button).
+- Spoiler exposure: the whole sheet tab is public, so future quotes can be read from the network response. Fix: serve only today and past rows from an Apps Script endpoint, as Caseboard does for its reports.
 - Sourceword CC BY-SA attribution is unverified. Confirm before any public launch.
 - Word list license: the Wordsummit list is unlicensed in its repo and is not planned for use.
 - Nothing is public until the owner approves a release.
@@ -91,5 +93,6 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.16: archive of past quotes (Past puzzles, ?day=), no status concept, tiles up to 40 px.
 - 0.1.0-p3.15: hosted as a hidden test build at froobaloo.com/cryptadoodle/ (noindex, no menu card).
 - 0.1.0-p3.14: How to play and Tutorial are one thing. How to play runs the interactive tutorial, with a blue border.

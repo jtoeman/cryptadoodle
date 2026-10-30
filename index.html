@@ -67,6 +67,9 @@
   /* The entry panel. On a phone with the keyboard up it floats directly above the keyboard. */
   #dockInner { border:2px solid var(--accent); border-radius:12px; background:var(--paper); padding:8px 8px 10px; }
   #dockInner.floating { position:fixed; z-index:5; left:50%; transform:translateX(-50%); bottom:var(--kb,0px); width:min(430px, calc(100% - 16px)); box-shadow:0 -4px 14px rgba(0,0,0,.12); }
+  .past { border:2px solid var(--accent); border-radius:12px; padding:8px; display:flex; flex-direction:column; gap:6px; max-height:50vh; overflow-y:auto; background:var(--paper); }
+  .past[hidden] { display:none; }
+  .pastItem { text-align:left; min-height:44px; }
   .tutorial { text-align:center; font-size:15px; color:var(--ink); font-weight:600; min-height:22px; border:2px solid var(--accent); border-radius:12px; background:var(--paper); padding:8px 10px; }
   #solvedBox { display:none; background:#fff; border:1px solid var(--ok); border-radius:10px; padding:12px; text-align:center; }
   #solvedBox.show { display:block; }
@@ -128,8 +131,10 @@
   <div id="msg" aria-live="polite"></div>
 
   <div class="row">
-    <button id="newBtn" type="button">New puzzle</button>
+    <button id="pastBtn" type="button">Past puzzles</button>
   </div>
+
+  <div id="past" class="past" hidden></div>
 
   <div id="solvedBox">
     <p><b>Solved.</b> <span id="finalScore"></span></p>
@@ -137,7 +142,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.15 (prototype)</div>
+    <div>Build 0.1.0-p3.16 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -158,7 +163,8 @@ const QUOTES = [
 ];
 // short quote used by the interactive tutorial
 const TUTORIAL = { text: "Know thyself", theme: "Ancient Greek maxim" };
-// Shared Google Sheet (froobaloodb), tab "Cryptadoodle": columns Date, Quote, Theme, Status.
+// Shared Google Sheet (froobaloodb), tab "Cryptadoodle": columns Date, Quote, Theme.
+// A quote belongs to its date. Future dates are never shown.
 // Read in the browser the same way Sourceword reads its tab. QUOTES is the fallback.
 const SHEET_ID = "1x6s2B4He9OoMUQgSuK1Rm3Ag7QWJ_ZuvaygkUGn_POo";
 const SHEET_TAB = "Cryptadoodle";
@@ -173,7 +179,7 @@ let guess = "";
 let score = 0;
 let alertTimer = null;
 let tutorialMode = false;
-let randomMode = false;     // true after "New puzzle": draw from the sheet at random
+let pickedQuote = null;    // a past puzzle chosen from the archive, or from ?day=
 let sheetQuotes = [];       // rows from the sheet: { date: "YYYY-MM-DD" | null, text, theme }
 let dailyQuote = null;      // today's row from the sheet, if there is one
 
@@ -242,13 +248,55 @@ async function loadSheetQuotes() {
   }
 }
 
+// Quotes whose date has arrived (today or earlier), newest first. Future rows are never used.
+function pastQuotes() {
+  const today = todayNY();
+  return sheetQuotes.filter(q => q.date && q.date <= today).sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
+function fmtDate(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function togglePast() {
+  const el = document.getElementById("past");
+  if (!el.hidden) { el.hidden = true; return; }
+  el.innerHTML = "";
+  const list = pastQuotes();
+  if (!list.length) {
+    el.textContent = "Past puzzles appear here once the sheet loads.";
+  } else {
+    list.forEach(q => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "pastItem";
+      b.textContent = fmtDate(q.date) + (q.theme ? " · " + q.theme : "");
+      b.onclick = () => pickPast(q);
+      el.appendChild(b);
+    });
+  }
+  el.hidden = false;
+}
+
+function pickPast(q) {
+  pickedQuote = q;
+  tutorialMode = false;
+  document.getElementById("past").hidden = true;
+  history.replaceState(null, "", "?day=" + q.date);
+  newPuzzle();
+}
+
 function newPuzzle() {
   let q = TUTORIAL;
   if (!tutorialMode) {
-    if (!randomMode && dailyQuote) {
+    if (pickedQuote) {
+      q = pickedQuote;
+      pickedQuote = null;
+    } else if (dailyQuote) {
       q = dailyQuote;
     } else {
-      const pool = sheetQuotes.length ? sheetQuotes : QUOTES;
+      const pool = pastQuotes().length ? pastQuotes() : QUOTES;
       let next;
       do { next = Math.floor(Math.random() * pool.length); } while (pool.length > 1 && next === quoteIdx);
       quoteIdx = next;
@@ -468,7 +516,7 @@ function fitTiles() {
   const play = document.querySelector(".play");
   const maxLen = Math.max(...puzzle.words.map(w => w.length));
   const avail = (play.clientWidth || 340) - 8;
-  const w = Math.max(14, Math.min(34, Math.floor((avail - (maxLen - 1) * 4) / maxLen)));
+  const w = Math.max(14, Math.min(40, Math.floor((avail - (maxLen - 1) * 4) / maxLen)));
   const st = document.documentElement.style;
   st.setProperty("--tw", w + "px");
   st.setProperty("--th", Math.round(w * 1.18) + "px");
@@ -580,7 +628,7 @@ document.getElementById("entry").addEventListener("submit", e => {
   submit();
 });
 
-document.getElementById("newBtn").onclick = () => { tutorialMode = false; randomMode = true; newPuzzle(); };
+document.getElementById("pastBtn").onclick = togglePast;
 document.getElementById("helpBtn").onclick = () => { tutorialMode = true; newPuzzle(); };
 
 newPuzzle(); // shows immediately, so the page works offline
@@ -589,8 +637,16 @@ newPuzzle(); // shows immediately, so the page works offline
 loadSheetQuotes()
   .then(all => {
     sheetQuotes = all;
-    dailyQuote = all.find(q => q.date === todayNY()) || null;
-    if (dailyQuote && !tutorialMode && score === 0 && revealed.size === 0 && selected === null) newPuzzle();
+    const today = todayNY();
+    dailyQuote = all.find(q => q.date === today) || null;
+    // ?day=YYYY-MM-DD opens that past puzzle (never a future one)
+    const day = new URLSearchParams(location.search).get("day");
+    const past = day && day <= today ? all.find(q => q.date === day) : null;
+    if (past) {
+      pickPast(past);
+    } else if (dailyQuote && !tutorialMode && score === 0 && revealed.size === 0 && selected === null) {
+      newPuzzle();
+    }
   })
   .catch(err => console.warn("Cryptadoodle: sheet unavailable, using built-in quotes:", err));
 </script>
