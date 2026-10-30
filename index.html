@@ -48,15 +48,15 @@
   @keyframes flash { 0%,100% { transform:scale(1); } 40% { transform:scale(1.25); } }
 
   .stage { display:flex; gap:12px; align-items:stretch; }
-  .stage::before { content:""; flex:0 0 37px; } /* same width as the tray column, so the board centers on the page */
+  .stage::before { content:""; flex:0 0 64px; } /* same width as the tray column, so the board centers on the page */
   .play { flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
-  #trayWrap { flex:0 0 auto; width:37px; border-left:1px solid var(--line); padding-left:10px; }
+  #trayWrap { flex:0 0 auto; width:64px; border-left:1px solid var(--line); }
   .topRow { display:flex; align-items:flex-start; gap:12px; }
   #theme { flex:1; min-width:0; }
-  #trayHead { flex:0 0 auto; font-size:12px; color:var(--muted); line-height:1.2; white-space:nowrap; text-align:right; margin-top:2px; }
+  #trayHead { flex:0 0 64px; width:64px; font-size:12px; color:var(--muted); line-height:1.2; text-align:center; margin-top:2px; }
   .chip { display:inline-flex; align-items:center; justify-content:center; width:26px; height:30px; border:1px solid var(--ink); border-radius:6px; background:#fff; color:var(--ink); font-weight:800; font-size:16px; vertical-align:middle; }
   #trayWrap.show { display:block; }
-  #tray { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  #tray { display:flex; flex-direction:column; align-items:center; gap:4px; }
   #tray span { display:flex; align-items:center; justify-content:center; width:26px; height:30px; border-radius:5px; font-weight:700; font-size:13px; background:var(--open); color:var(--open-ink); }
   #tray span.good { background:var(--ok); color:#fff; }
   #tray span.bad { background:var(--bad); color:#fff; }
@@ -70,7 +70,9 @@
   .past { border:2px solid var(--accent); border-radius:12px; padding:8px; display:flex; flex-direction:column; gap:6px; max-height:50vh; overflow-y:auto; background:var(--paper); }
   .past[hidden] { display:none; }
   .pastItem { text-align:left; min-height:44px; }
-  .tutorial { text-align:center; font-size:15px; color:var(--ink); font-weight:600; min-height:22px; border:2px solid var(--accent); border-radius:12px; background:var(--paper); padding:8px 10px; }
+  .tutorial { font-size:15px; line-height:1.45; color:var(--ink); border:2px solid var(--accent); border-radius:12px; background:var(--paper); padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
+  .tutorial p { margin:0; }
+  #tutBack { align-self:center; }
   #solvedBox { display:none; background:#fff; border:1px solid var(--ok); border-radius:10px; padding:12px; text-align:center; }
   #solvedBox.show { display:block; }
   footer { margin-top:auto; font-size:13px; color:var(--muted); text-align:center; line-height:1.6; }
@@ -100,6 +102,10 @@
   <div class="play">
   <section id="board" aria-label="Puzzle"></section>
 
+  <div id="tutorial" class="tutorial" style="display:none">
+    <p id="tutText"></p>
+    <button id="tutBack" type="button">Back to today's puzzle</button>
+  </div>
   <div id="dock">
   <div id="dockInner">
   <div id="selinfo" aria-live="polite"></div>
@@ -126,8 +132,6 @@
 
   <div id="alert" role="alert"></div>
 
-  <div id="tutorial" class="tutorial" style="display:none"></div>
-
   <div id="msg" aria-live="polite"></div>
 
   <div class="row">
@@ -142,7 +146,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.16 (prototype)</div>
+    <div>Build 0.1.0-p3.17 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -282,6 +286,7 @@ function togglePast() {
 function pickPast(q) {
   pickedQuote = q;
   tutorialMode = false;
+  mainSnapshot = null;
   document.getElementById("past").hidden = true;
   history.replaceState(null, "", "?day=" + q.date);
   newPuzzle();
@@ -498,17 +503,45 @@ function setMsg(t) { document.getElementById("msg").textContent = t; }
 
 // Tutorial: one step at a time, using the same rules as a real puzzle. No answers are given.
 const TUT_STEPS = [
-  { done: () => selected !== null || revealed.size > 0, text: "Tap a tile to pick a code letter." },
-  { done: () => wrongPairs.size > 0 || revealed.size > 0, text: "Type a letter in the box and press Guess. A wrong guess costs 1." },
-  { done: () => revealed.size > 0, text: "A right guess reveals every tile with that code letter and scores points. An unrevealed letter is worth the letters left in its word times its tile value." },
-  { done: () => revealed.size === totalCodeLetters(), text: "Keep going. Letters Used on the right shows letters you can't use anymore." }
+  { done: () => selected !== null || revealed.size > 0, text: "Welcome to Cryptadoodle. Every day you get a famous quote or phrase, but all the letters are encrypted. Your job is to work out the message, and score as high as you can along the way." },
+  { done: () => wrongPairs.size > 0 || revealed.size > 0, text: "Tap a tile to pick a code letter, then type your guess in the box and press Guess. Every tile with the same code is the same real letter." },
+  { done: () => revealed.size > 0, text: "A right guess reveals every tile with that code and scores points. A wrong guess costs 1. Each letter can be tried only once per code, so think before you guess." },
+  { done: () => revealed.size === totalCodeLetters(), text: "Points come from rarity and from how much of the word is still hidden. Q and Z are worth the most, so guess the rare letters early, while their words still have many hidden letters. Letters Used on the right shows letters you can no longer use." },
 ];
+const TUT_END = "That's the game. Back to today's puzzle to play for real. Your progress there is saved.";
 function renderTutorial() {
   const el = document.getElementById("tutorial");
-  if (!tutorialMode) { el.style.display = "none"; el.textContent = ""; return; }
+  if (!tutorialMode) { el.style.display = "none"; return; }
   el.style.display = "";
   const step = TUT_STEPS.find(s => !s.done());
-  el.textContent = step ? `Tutorial: ${step.text}` : "Tutorial complete. Today's quote is ready to play.";
+  document.getElementById("tutText").textContent = step ? step.text : TUT_END;
+}
+
+// How to play is a separate round. Today's progress is kept aside and restored on exit.
+let mainSnapshot = null;
+function snapshotState() {
+  return { puzzle, revealed: [...revealed], wrongPairs: [...wrongPairs], score, quoteIdx };
+}
+function restoreState(st) {
+  puzzle = st.puzzle;
+  revealed = new Set(st.revealed);
+  wrongPairs = new Set(st.wrongPairs);
+  score = st.score;
+  quoteIdx = st.quoteIdx;
+  selected = null; guess = ""; entry.value = "";
+  hideAlert(); setMsg("");
+  document.getElementById("solvedBox").classList.remove("show");
+  render();
+}
+function enterTutorial() {
+  if (!tutorialMode) mainSnapshot = puzzle ? snapshotState() : null;
+  tutorialMode = true;
+  newPuzzle();
+}
+function exitTutorial() {
+  tutorialMode = false;
+  if (mainSnapshot) { restoreState(mainSnapshot); mainSnapshot = null; }
+  else newPuzzle();
 }
 
 // Words never wrap: shrink the tiles so the longest word fits the play area.
@@ -629,7 +662,8 @@ document.getElementById("entry").addEventListener("submit", e => {
 });
 
 document.getElementById("pastBtn").onclick = togglePast;
-document.getElementById("helpBtn").onclick = () => { tutorialMode = true; newPuzzle(); };
+document.getElementById("helpBtn").onclick = enterTutorial;
+document.getElementById("tutBack").onclick = exitTutorial;
 
 newPuzzle(); // shows immediately, so the page works offline
 
