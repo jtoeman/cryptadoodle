@@ -189,7 +189,7 @@
   </div>
 
   <footer>
-    <div>Build 0.1.0-p3.32 (prototype)</div>
+    <div>Build 0.1.0-p3.33 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -768,7 +768,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.32", event_properties: props || {}
+        platform: "Web", app_version: "0.1.0-p3.33", event_properties: props || {}
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
@@ -789,7 +789,7 @@ const TUT_STEPS = [
   { text: "2. Points depend on rarity. Rare letters like Q and Z are worth more. The number under each tile is what that letter is worth right now.", gate: null },
   { text: "3. Now tap a tile with a different letter.", gate: () => selected !== null && selected !== tutFirst },
   { text: "4. A letter is worth the hidden letters left in its word, times its rarity. Each reveal lowers the value of the letters in its words, so guess the rare letters early.", gate: null },
-  { text: "Make a real guess now. Type a letter in the box and press Guess, or guess the tile you picked.", gate: () => revealed.size > 0 || wrongPairs.size > 0 },
+  { text: "Now take your first <b>real</b> turn. Pick any letter tile, and enter your guess below!", gate: () => revealed.size > 0 || wrongPairs.size > 0 },
   { text: "Keep going and solve the rest of the quote. Your score is under the entry box.", gate: () => revealed.size === totalCodeLetters() },
 ];
 const TUT_END = "That's the tutorial. You're set. Keep going with today's quote, and open How to play any time to see this again.";
@@ -805,7 +805,7 @@ function renderTutorial() {
   el.style.display = "";
   while (tutIndex < TUT_STEPS.length && TUT_STEPS[tutIndex].gate && TUT_STEPS[tutIndex].gate()) tutIndex++;
   const done = tutIndex >= TUT_STEPS.length;
-  document.getElementById("tutText").textContent = done ? TUT_END : TUT_STEPS[tutIndex].text;
+  document.getElementById("tutText").innerHTML = done ? TUT_END : TUT_STEPS[tutIndex].text; // static step text only
   // Next only on steps that don't wait for an action
   document.getElementById("tutNext").hidden = done || TUT_STEPS[tutIndex].gate !== null;
   document.getElementById("tutDone").hidden = !done;
