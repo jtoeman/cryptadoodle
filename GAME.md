@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.24. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
+Status: prototype, build 0.1.0-p3.25. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -93,6 +93,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.25: Night Desk visual theme (dark slate, amber accent, teal found, coral wrong; Inter and JetBrains Mono).
 - 0.1.0-p3.24: no random quote flashes on load. The page waits for the sheet (a loading line shows meanwhile) and falls back to built-in quotes only if the sheet fails.
 - 0.1.0-p3.23: Stats (played, solved, current and best streak, best score) kept on the device. Share result after a solve, with the score and link but no quote.
 - 0.1.0-p3.22: first-time visitors get the tutorial automatically. Done or How to play turns it off, and it stays off on return visits (stored on the device).
