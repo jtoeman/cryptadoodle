@@ -112,6 +112,12 @@
     <div id="trayHead">Letters Used</div>
   </div>
 
+  <div id="solvedBox">
+    <p><b>Solved.</b> <span id="finalScore"></span></p>
+    <p id="finalQuote" class="muted"></p>
+    <p><button id="shareBtn" class="primary" type="button">Share result</button> <span id="shareMsg" class="muted"></span></p>
+  </div>
+
   <div class="stage">
   <div class="play">
   <section id="board" aria-label="Puzzle"></section>
@@ -182,14 +188,8 @@
     <p><button id="statsClose" class="primary" type="button">Close</button></p>
   </dialog>
 
-  <div id="solvedBox">
-    <p><b>Solved.</b> <span id="finalScore"></span></p>
-    <p id="finalQuote" class="muted"></p>
-    <p><button id="shareBtn" class="primary" type="button">Share result</button> <span id="shareMsg" class="muted"></span></p>
-  </div>
-
   <footer>
-    <div>Build 0.1.0-p3.34 (prototype)</div>
+    <div>Build 0.1.0-p3.35 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -610,7 +610,9 @@ function maxPossible() {
 
 function showWin() {
   track("puzzle_solved", { date: puzzle.date, score: score, max_possible: maxPossible(), guesses: guessCount });
-  document.getElementById("solvedBox").classList.add("show");
+  const sb = document.getElementById("solvedBox");
+  sb.classList.add("show");
+  if (sb.scrollIntoView) sb.scrollIntoView({ block: "start", behavior: "auto" });
   document.getElementById("finalScore").textContent = `Score ${score}. Max possible: ${maxPossible()}.`;
   document.getElementById("finalQuote").textContent = `"${puzzle.quote}"`;
 }
@@ -774,7 +776,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.34", event_properties: props || {}
+        platform: "Web", app_version: "0.1.0-p3.35", event_properties: props || {}
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
