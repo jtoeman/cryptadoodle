@@ -189,7 +189,7 @@
   </dialog>
 
   <footer>
-    <div>Build 0.1.0-p3.35 (prototype)</div>
+    <div>Build 0.1.0-p3.36 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -198,6 +198,7 @@
   </footer>
 </main>
 
+<script src="/kit/froobaloo.js"></script>
 <script>
 const RARITY = {A:1,B:3,C:3,D:2,E:1,F:4,G:2,H:4,I:1,J:8,K:5,L:1,M:3,N:1,O:1,P:3,Q:10,R:1,S:1,T:1,U:1,V:4,W:4,X:8,Y:4,Z:10};
 const WRONG_PENALTY = 1;
@@ -634,6 +635,12 @@ function recordProgress(solved) {
   if (solved) { cur.solved = true; cur.max = maxPossible(); }
   days[puzzle.date] = cur;
   storeSet(DAYS_KEY, JSON.stringify(days));
+  if (solved) markHubPlayed();
+}
+
+// Hub "played today" mark (kit at /kit/froobaloo.js). A finished day counts.
+function markHubPlayed() {
+  try { if (window.Froobaloo) window.Froobaloo.markPlayed("cryptadoodle"); } catch (e) { /* kit missing */ }
 }
 function computeStats() {
   const days = loadDays();
@@ -776,7 +783,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.35", event_properties: props || {}
+        platform: "Web", app_version: "0.1.0-p3.36", event_properties: props || {}
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }

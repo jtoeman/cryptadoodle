@@ -111,6 +111,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.34: tutorial's last step has Next and Done, so it never gets stuck. Phone keyboard handling is throttled to one update per frame, to stop the flicker loop.
 - 0.1.0-p3.33: tutorial's first real-turn step reads "Now take your first real turn..." (real in bold).
 - 0.1.0-p3.32: tutorial copy box uses the accent color, matching its thick border. Buttons inside it are dark.
+- 0.1.0-p3.36: a solved day marks Cryptadoodle as played on the hub (kit markPlayed). Needs a hub menu card to show the mark.
 - 0.1.0-p3.31: daily hidden letter modifiers (-2 to +2, never below 1) seeded from the date. Desktop tutorial sits in the middle of the screen; its card lets clicks through to the tiles.
 - 0.1.0-p3.30: share sends a link to that day's puzzle and, where supported, a cipher-only image. Text is the same length for any quote.
 - 0.1.0-p3.29: anonymous play analytics to Amplitude, only after the player allows it. Consent banner on first visit, toggle in Stats.
