@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <title>Cryptadoodle</title>
 <style>
@@ -189,7 +188,7 @@
   </dialog>
 
   <footer>
-    <div>Build 0.1.0-p3.36 (prototype)</div>
+    <div>Build 0.1.0-p3.37 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -783,7 +782,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.36", event_properties: props || {}
+        platform: "Web", app_version: "0.1.0-p3.37", event_properties: { ...(props || {}), game: "cryptadoodle" }
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
