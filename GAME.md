@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.37. Public at froobaloo.com/cryptadoodle/ (In prototype tag on the hub card). Lifecycle: Prototype, then Now testing, then live.
+Status: prototype, build 0.1.0-p3.38. Public at froobaloo.com/cryptadoodle/ (In prototype tag on the hub card). Lifecycle: Prototype, then Now testing, then live.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -111,6 +111,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.34: tutorial's last step has Next and Done, so it never gets stuck. Phone keyboard handling is throttled to one update per frame, to stop the flicker loop.
 - 0.1.0-p3.33: tutorial's first real-turn step reads "Now take your first real turn..." (real in bold).
 - 0.1.0-p3.32: tutorial copy box uses the accent color, matching its thick border. Buttons inside it are dark.
+- 0.1.0-p3.38: event names use the title-case convention used by the other games: Puzzle Started, Guess Made, Puzzle Completed (was puzzle_solved), Share Clicked.
 - 0.1.0-p3.37: public (noindex removed). Analytics events carry game: cryptadoodle.
 - 0.1.0-p3.36: a solved day marks Cryptadoodle as played on the hub (kit markPlayed). Needs a hub menu card to show the mark.
 - 0.1.0-p3.31: daily hidden letter modifiers (-2 to +2, never below 1) seeded from the date. Desktop tutorial sits in the middle of the screen; its card lets clicks through to the tiles.
