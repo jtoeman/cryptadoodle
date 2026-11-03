@@ -188,7 +188,7 @@
   </dialog>
 
   <footer>
-    <div>Build 0.1.0-p3.38 (prototype)</div>
+    <div>Build 0.1.0-p3.39 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -216,7 +216,7 @@ const SHEET_TAB = "Cryptadoodle";
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 // Per-device storage. Private windows or blocked storage just mean no memory between visits.
-const AMP_KEY = "d22e44fd46889ba6e8f013ad7728265b"; // Amplitude project: Cryptadoodle
+const AMP_KEY = "6ae928be8b28b6eb768a79b0fdf1fb3f"; // Amplitude project: Froobaloo (every game reports here, split by the game property)
 const CONSENT_KEY = "cryptadoodle.analytics";
 const DEVICE_KEY = "cryptadoodle.deviceId";
 const SEEN_KEY = "cryptadoodle.tutSeen";
@@ -782,7 +782,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.38", event_properties: { ...(props || {}), game: "cryptadoodle" }
+        platform: "Web", app_version: "0.1.0-p3.39", event_properties: { ...(props || {}), game: "cryptadoodle" }
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
