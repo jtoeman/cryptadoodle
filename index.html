@@ -158,6 +158,7 @@
   <div id="msg" aria-live="polite"></div>
 
   <div class="row">
+    <button id="solveBtn" type="button">Solve quote</button>
     <button id="pastBtn" type="button">Past puzzles</button>
     <button id="statsBtn" type="button">Stats</button>
   </div>
@@ -180,6 +181,18 @@
     </div>
   </div>
 
+  <dialog id="solveModal" aria-labelledby="solveTitle">
+    <h2 id="solveTitle">Solve the whole quote</h2>
+    <p>Type the full quote if you know it. Capitals and punctuation don't matter.</p>
+    <p><b>Right:</b> every remaining letter is revealed and you get the most points still available.</p>
+    <p><b>Wrong:</b> you lose 10 points and keep playing.</p>
+    <textarea id="solveText" rows="3" style="width:100%;font:inherit;padding:8px;box-sizing:border-box;" aria-label="Your answer for the whole quote"></textarea>
+    <p class="tutBtns">
+      <button id="solveCancel" type="button">Cancel</button>
+      <button id="solveSubmit" class="primary" type="button">Submit</button>
+    </p>
+  </dialog>
+
   <dialog id="statsModal" aria-labelledby="statsTitle">
     <h2 id="statsTitle">Your stats</h2>
     <div id="statsBody"></div>
@@ -189,7 +202,7 @@
   </dialog>
 
   <footer>
-    <div>Build 0.1.0-p3.35 (prototype)</div>
+    <div>Build 0.1.0-p3.36 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -579,33 +592,77 @@ function submit() {
   render();
 }
 
-// Points for one code letter, given a set of already-revealed code letters.
-function valueIn(c, rev) {
-  let min = Infinity;
-  puzzle.words.forEach(w => {
-    if (w.some(t => t.cipher === c)) min = Math.min(min, w.filter(t => !rev.has(t.cipher)).length);
-  });
-  return min * letterPts(puzzle.dec[c]);
-}
-
 // Best possible score for this puzzle: every guess right, in the best order.
-function maxPossible() {
-  const codes = [...new Set(puzzle.words.flat().map(t => t.cipher))];
-  const full = (1 << codes.length) - 1;
-  const memo = new Map();
-  const toSet = mask => new Set(codes.filter((_, i) => mask & (1 << i)));
+function maxPossible() { return maxFrom(new Set()); }
+
+// Most points still available if every remaining letter is guessed right, in the best order.
+function maxFrom(startRev) {
+  // Built once per puzzle: letters as bits, and per word the count of each letter in it.
+  if (!puzzle.dp) {
+    const flat = puzzle.words.flat();
+    const codes = [...new Set(flat.map(t => t.cipher))];
+    const idx = new Map(codes.map((c, i) => [c, i]));
+    const D = {
+      codes,
+      occ: codes.map(c => flat.filter(t => t.cipher === c).length),
+      pts: codes.map(c => letterPts(puzzle.dec[c])), // same daily modifiers as scoring
+      wordLen: puzzle.words.map(w => w.length),
+      wordCnt: puzzle.words.map(w => {
+        const m = new Map();
+        w.forEach(t => { const i = idx.get(t.cipher); m.set(i, (m.get(i) || 0) + 1); });
+        return [...m];
+      }),
+      codeWords: codes.map((_, i) => puzzle.words.map((w, k) => (w.some(t => idx.get(t.cipher) === i) ? k : -1)).filter(k => k >= 0)),
+      full: (1 << codes.length) - 1,
+      memo: new Map()
+    };
+    puzzle.dp = D;
+  }
+  const D = puzzle.dp;
+  let start = 0;
+  D.codes.forEach((c, i) => { if (startRev.has(c)) start |= 1 << i; });
+  const unrevealed = (k, mask) => {
+    let n = D.wordLen[k];
+    for (const [j, c] of D.wordCnt[k]) if (mask & (1 << j)) n -= c;
+    return n;
+  };
   function best(mask) {
-    if (mask === full) return 0;
-    if (memo.has(mask)) return memo.get(mask);
-    const rev = toSet(mask);
+    if (mask === D.full) return 0;
+    if (D.memo.has(mask)) return D.memo.get(mask);
     let b = 0;
-    codes.forEach((c, i) => {
-      if (!(mask & (1 << i))) b = Math.max(b, valueIn(c, rev) * occurrences(c) + best(mask | (1 << i)));
-    });
-    memo.set(mask, b);
+    for (let i = 0; i < D.codes.length; i++) {
+      if (mask & (1 << i)) continue;
+      let min = Infinity;
+      for (const k of D.codeWords[i]) min = Math.min(min, unrevealed(k, mask));
+      const v = min * D.pts[i] * D.occ[i] + best(mask | (1 << i));
+      if (v > b) b = v;
+    }
+    D.memo.set(mask, b);
     return b;
   }
-  return best(0);
+  return best(start);
+}
+
+// Solve the whole quote at once. Letters only: capitals and punctuation don't matter.
+const SOLVE_PENALTY = 10;
+function trySolve(text) {
+  const want = puzzle.words.flat().map(t => t.plain).join("");
+  const got = (text.toUpperCase().match(/[A-Z]+/g) || []).join("");
+  if (got === want) {
+    const gain = maxFrom(revealed);
+    puzzle.words.flat().forEach(t => revealed.add(t.cipher));
+    score += gain;
+    track("solve_now", { date: puzzle.date, correct: true, points: gain });
+    showAlert("quote", `right, +${gain}`, true);
+    recordProgress(true);
+    render();
+    showWin();
+  } else {
+    score -= SOLVE_PENALTY;
+    track("solve_now", { date: puzzle.date, correct: false });
+    showAlert("quote", `wrong, −${SOLVE_PENALTY}`, false);
+    render();
+  }
 }
 
 function showWin() {
@@ -776,7 +833,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.35", event_properties: props || {}
+        platform: "Web", app_version: "0.1.0-p3.36", event_properties: props || {}
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
@@ -846,6 +903,7 @@ function foundPlain() {
 }
 
 function render() {
+  document.getElementById("solveBtn").hidden = revealed.size === totalCodeLetters();
   // score and theme
   const scoreEl = document.getElementById("score");
   scoreEl.textContent = score;
@@ -946,6 +1004,19 @@ document.getElementById("tutDone").onclick = () => { tutorialMode = false; store
 document.getElementById("trayClose").onclick = () => closeDialog(document.getElementById("trayModal"));
 document.getElementById("tutNext").onclick = () => { tutIndex++; renderTutorial(); };
 document.getElementById("statsBtn").onclick = showStats;
+document.getElementById("solveBtn").onclick = () => {
+  if (!puzzle) return;
+  document.getElementById("solveText").value = "";
+  openDialog(document.getElementById("solveModal"));
+  document.getElementById("solveText").focus();
+};
+document.getElementById("solveCancel").onclick = () => closeDialog(document.getElementById("solveModal"));
+document.getElementById("solveSubmit").onclick = () => {
+  const text = document.getElementById("solveText").value;
+  if (!text.trim()) return;
+  closeDialog(document.getElementById("solveModal"));
+  trySolve(text);
+};
 document.getElementById("statsClose").onclick = () => closeDialog(document.getElementById("statsModal"));
 document.getElementById("consentYes").onclick = () => setAnalytics(true);
 document.getElementById("consentNo").onclick = () => setAnalytics(false);

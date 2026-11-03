@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.35. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
+Status: prototype, build 0.1.0-p3.36. Test build hosted at froobaloo.com/cryptadoodle/ (not in the hub menu, hidden from search). Not approved for public release.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -29,6 +29,13 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - Daily hidden modifier: each letter gets a random -2, -1, 0, +1 or +2 for the day, added to its tile value before scoring. The final value is never below 1. The modifiers are seeded from the puzzle date, so every player gets the same ones. They are never shown.
 - Values are current values. They appear under each unrevealed tile and recalculate after each correct guess.
 - Scoring is a playtest starting point. Values are expected to change after playtesting.
+
+## Solve the whole quote
+
+- Solve quote opens a box to type the full quote. Capitals and punctuation don't matter.
+- Right: every remaining letter is revealed and the player gets the most points still available, if every remaining letter were guessed right in the best order.
+- Wrong: 10 points off. Play continues, and the player can try again.
+- The button disappears once the puzzle is solved.
 
 ## Solved state
 
@@ -107,6 +114,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.36: Solve quote: type the whole quote. Right reveals everything and awards the most remaining points. Wrong costs 10. Max-points calculation is faster and uses the daily modifiers.
 - 0.1.0-p3.35: solved panel (score, quote, Share result) moved above the board and scrolled into view on solve, so it's visible on phones without scrolling.
 - 0.1.0-p3.34: tutorial's last step has Next and Done, so it never gets stuck. Phone keyboard handling is throttled to one update per frame, to stop the flicker loop.
 - 0.1.0-p3.33: tutorial's first real-turn step reads "Now take your first real turn..." (real in bold).
