@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <title>Cryptadoodle</title>
 <style>
@@ -202,7 +201,7 @@
   </dialog>
 
   <footer>
-    <div>Build 0.1.0-p3.36 (prototype)</div>
+    <div>Build 0.1.0-p3.40 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -211,6 +210,7 @@
   </footer>
 </main>
 
+<script src="/kit/froobaloo.js"></script>
 <script>
 const RARITY = {A:1,B:3,C:3,D:2,E:1,F:4,G:2,H:4,I:1,J:8,K:5,L:1,M:3,N:1,O:1,P:3,Q:10,R:1,S:1,T:1,U:1,V:4,W:4,X:8,Y:4,Z:10};
 const WRONG_PENALTY = 1;
@@ -229,7 +229,7 @@ const SHEET_TAB = "Cryptadoodle";
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 // Per-device storage. Private windows or blocked storage just mean no memory between visits.
-const AMP_KEY = "d22e44fd46889ba6e8f013ad7728265b"; // Amplitude project: Cryptadoodle
+const AMP_KEY = "6ae928be8b28b6eb768a79b0fdf1fb3f"; // Amplitude project: Froobaloo (every game reports here, split by the game property)
 const CONSENT_KEY = "cryptadoodle.analytics";
 const DEVICE_KEY = "cryptadoodle.deviceId";
 const SEEN_KEY = "cryptadoodle.tutSeen";
@@ -415,7 +415,7 @@ function newPuzzle() {
   hideAlert();
   setMsg("");
   render();
-  track("puzzle_started", { date: puzzle.date, archive: fromArchive });
+  track("Puzzle Started", { date: puzzle.date, archive: fromArchive });
 }
 
 // Daily hidden modifier per plain letter: -2..+2, final value never below 1.
@@ -574,7 +574,7 @@ function submit() {
     entry.blur();
     showAlert(g, `right, +${pts}`, true);
     guessCount++;
-    track("guess_made", { result: "right", score: score, date: puzzle.date });
+    track("Guess Made", { result: "right", score: score, date: puzzle.date });
     if (revealed.size === totalCodeLetters()) showWin();
   } else {
     score -= WRONG_PENALTY;
@@ -583,7 +583,7 @@ function submit() {
     entry.value = "";
     showAlert(g, `wrong, −${WRONG_PENALTY}`, false);
     guessCount++;
-    track("guess_made", { result: "wrong", score: score, date: puzzle.date });
+    track("Guess Made", { result: "wrong", score: score, date: puzzle.date });
     if (tutorialMode && !trayShown) { trayShown = true; openDialog(document.getElementById("trayModal")); }
     shakeEntry();
     entry.focus();
@@ -652,21 +652,21 @@ function trySolve(text) {
     const gain = maxFrom(revealed);
     puzzle.words.flat().forEach(t => revealed.add(t.cipher));
     score += gain;
-    track("solve_now", { date: puzzle.date, correct: true, points: gain });
+    track("Solve Quote", { date: puzzle.date, correct: true, points: gain });
     showAlert("quote", `right, +${gain}`, true);
     recordProgress(true);
     render();
     showWin();
   } else {
     score -= SOLVE_PENALTY;
-    track("solve_now", { date: puzzle.date, correct: false });
+    track("Solve Quote", { date: puzzle.date, correct: false });
     showAlert("quote", `wrong, −${SOLVE_PENALTY}`, false);
     render();
   }
 }
 
 function showWin() {
-  track("puzzle_solved", { date: puzzle.date, score: score, max_possible: maxPossible(), guesses: guessCount });
+  track("Puzzle Completed", { date: puzzle.date, score: score, max_possible: maxPossible(), guesses: guessCount });
   const sb = document.getElementById("solvedBox");
   sb.classList.add("show");
   if (sb.scrollIntoView) sb.scrollIntoView({ block: "start", behavior: "auto" });
@@ -691,6 +691,12 @@ function recordProgress(solved) {
   if (solved) { cur.solved = true; cur.max = maxPossible(); }
   days[puzzle.date] = cur;
   storeSet(DAYS_KEY, JSON.stringify(days));
+  if (solved) markHubPlayed();
+}
+
+// Hub "played today" mark (kit at /kit/froobaloo.js). A finished day counts.
+function markHubPlayed() {
+  try { if (window.Froobaloo) window.Froobaloo.markPlayed("cryptadoodle"); } catch (e) { /* kit missing */ }
 }
 function computeStats() {
   const days = loadDays();
@@ -785,7 +791,7 @@ function shareImage() {
 
 async function shareResult() {
   const text = shareText();
-  track("share_clicked", { date: puzzle.date });
+  track("Share Clicked", { date: puzzle.date });
   const msg = document.getElementById("shareMsg");
   let blob = null;
   try { blob = await shareImage(); } catch (e) { blob = null; }
@@ -833,7 +839,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.36", event_properties: props || {}
+        platform: "Web", app_version: "0.1.0-p3.40", event_properties: { ...(props || {}), game: "cryptadoodle" }
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
@@ -845,7 +851,7 @@ function setAnalytics(on) {
   if (box) box.hidden = true;
   const t = document.getElementById("shareToggle");
   if (t) t.checked = on;
-  if (on && puzzle) track("puzzle_started", { date: puzzle.date, archive: false, late_consent: true });
+  if (on && puzzle) track("Puzzle Started", { date: puzzle.date, archive: false, late_consent: true });
 }
 const TUT_STEPS = [
   { text: "Welcome to Cryptadoodle. Every day you get a famous quote or phrase, but all the letters are encrypted. Your job is to work out the message, and score as high as you can along the way.", gate: null },
