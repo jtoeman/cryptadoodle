@@ -92,6 +92,10 @@
   dialog p, dialog li { font-size:15px; line-height:1.5; }
   dialog ul { padding-left:20px; margin:8px 0; }
   .muted { color:var(--muted); font-size:13px; }
+  .solveCipher { display:flex; flex-wrap:wrap; justify-content:center; gap:8px 14px; margin:8px 0 12px; }
+  .solveWord { display:flex; gap:3px; }
+  .solveT { width:26px; height:30px; display:flex; align-items:center; justify-content:center; background:var(--open); border:1px solid var(--line); border-radius:5px; font-family:var(--mono); font-weight:700; font-size:14px; color:var(--ink); }
+  #solveModal { width:min(480px, calc(100vw - 24px)); box-sizing:border-box; }
   .consent { border:2px solid var(--accent); border-radius:12px; padding:10px 12px; background:var(--panel); font-size:14px; line-height:1.45; display:flex; flex-direction:column; gap:8px; }
   .consent[hidden] { display:none; }
   .statRow { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line); }
@@ -180,11 +184,20 @@
     </div>
   </div>
 
-  <dialog id="solveModal" aria-labelledby="solveTitle">
-    <h2 id="solveTitle">Solve the whole quote</h2>
-    <p>Type the full quote if you know it. Capitals and punctuation don't matter.</p>
+  <dialog id="solveWarn" aria-labelledby="solveWarnTitle">
+    <h2 id="solveWarnTitle">Before you solve</h2>
     <p><b>Right:</b> every remaining letter is revealed and you get the most points still available.</p>
     <p><b>Wrong:</b> you lose 10 points and keep playing.</p>
+    <p><label><input id="solveWarnSkip" type="checkbox"> Don't show this again</label></p>
+    <p class="tutBtns">
+      <button id="solveWarnCancel" type="button">Cancel</button>
+      <button id="solveWarnContinue" class="primary" type="button">Continue</button>
+    </p>
+  </dialog>
+
+  <dialog id="solveModal" aria-labelledby="solveTitle">
+    <h2 id="solveTitle">Solve the whole quote</h2>
+    <div id="solveCipher" class="solveCipher" aria-label="The whole quote in code"></div>
     <textarea id="solveText" rows="3" style="width:100%;font:inherit;padding:8px;box-sizing:border-box;" aria-label="Your answer for the whole quote"></textarea>
     <p class="tutBtns">
       <button id="solveCancel" type="button">Cancel</button>
@@ -201,7 +214,7 @@
   </dialog>
 
   <footer>
-    <div>Build 0.1.0-p3.40 (prototype)</div>
+    <div>Build 0.1.0-p3.41 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -839,7 +852,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.40", event_properties: { ...(props || {}), game: "cryptadoodle" }
+        platform: "Web", app_version: "0.1.0-p3.41", event_properties: { ...(props || {}), game: "cryptadoodle" }
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
@@ -1010,11 +1023,56 @@ document.getElementById("tutDone").onclick = () => { tutorialMode = false; store
 document.getElementById("trayClose").onclick = () => closeDialog(document.getElementById("trayModal"));
 document.getElementById("tutNext").onclick = () => { tutIndex++; renderTutorial(); };
 document.getElementById("statsBtn").onclick = showStats;
+const SOLVE_WARN_KEY = "cryptadoodle.solveWarnOff";
+function openSolve() {
+  const dlg = document.getElementById("solveModal");
+  const board = document.getElementById("solveCipher");
+  board.textContent = "";
+  for (const w of puzzle.words) {
+    const row = document.createElement("div");
+    row.className = "solveWord";
+    for (const t of w) {
+      const tile = document.createElement("span");
+      tile.className = "solveT";
+      tile.textContent = t.cipher;
+      row.appendChild(tile);
+    }
+    board.appendChild(row);
+  }
+  document.getElementById("solveText").value = "";
+  openDialog(dlg);
+  placeSolveDialog();
+  document.getElementById("solveText").focus();
+}
+// Keep the solve box inside the visible part of the screen when the phone keyboard is up.
+function placeSolveDialog() {
+  const dlg = document.getElementById("solveModal");
+  const vv = window.visualViewport;
+  const top = vv ? vv.offsetTop : 0;
+  const h = vv ? vv.height : window.innerHeight;
+  dlg.style.position = "fixed";
+  dlg.style.top = (top + 8) + "px";
+  dlg.style.bottom = "auto";
+  dlg.style.margin = "0 auto";
+  dlg.style.maxHeight = (h - 16) + "px";
+  dlg.style.overflowY = "auto";
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", () => {
+    const dlg = document.getElementById("solveModal");
+    if (dlg.open) placeSolveDialog();
+  });
+}
 document.getElementById("solveBtn").onclick = () => {
   if (!puzzle) return;
-  document.getElementById("solveText").value = "";
-  openDialog(document.getElementById("solveModal"));
-  document.getElementById("solveText").focus();
+  if (storeGet(SOLVE_WARN_KEY) === "1") openSolve();
+  else openDialog(document.getElementById("solveWarn"));
+};
+document.getElementById("solveWarnCancel").onclick = () => closeDialog(document.getElementById("solveWarn"));
+document.getElementById("solveWarnContinue").onclick = () => {
+  if (document.getElementById("solveWarnSkip").checked) storeSet(SOLVE_WARN_KEY, "1");
+  closeDialog(document.getElementById("solveWarn"));
+  openSolve();
 };
 document.getElementById("solveCancel").onclick = () => closeDialog(document.getElementById("solveModal"));
 document.getElementById("solveSubmit").onclick = () => {

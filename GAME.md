@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.40. Public at froobaloo.com/cryptadoodle/ (In prototype tag on the hub card). Lifecycle: Prototype, then Now testing, then live.
+Status: prototype, build 0.1.0-p3.41. Public at froobaloo.com/cryptadoodle/ (In prototype tag on the hub card). Lifecycle: Prototype, then Now testing, then live.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -32,6 +32,8 @@ Players guess the real letter behind a code letter. Every tile with that code le
 
 ## Solve the whole quote
 
+- Solve quote first shows a warning dialog (right, wrong, and a "Don't show this again" option, stored on the device).
+- Then a box opens with the whole quote in code, above the answer box, so it stays visible when the phone keyboard is up.
 - Solve quote opens a box to type the full quote. Capitals and punctuation don't matter.
 - Right: every remaining letter is revealed and the player gets the most points still available, if every remaining letter were guessed right in the best order.
 - Wrong: 10 points off. Play continues, and the player can try again.
@@ -114,6 +116,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.41: solve warning is its own dialog with "Don't show this again". The solve box shows the whole quote in code and stays above the phone keyboard.
 - 0.1.0-p3.40: Solve quote: type the whole quote. Right reveals everything and awards the most remaining points. Wrong costs 10. Max-points calculation is faster and uses the daily modifiers. Analytics: Solve Quote.
 - 0.1.0-p3.36 (Solve quote, renumbered p3.40): type the whole quote. Right reveals everything and awards the most remaining points. Wrong costs 10. Max-points calculation is faster and uses the daily modifiers.
 - 0.1.0-p3.35: solved panel (score, quote, Share result) moved above the board and scrolled into view on solve, so it's visible on phones without scrolling.
