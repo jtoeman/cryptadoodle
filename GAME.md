@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.41. Public at froobaloo.com/cryptadoodle/ (In prototype tag on the hub card). Lifecycle: Prototype, then Now testing, then live.
+Status: prototype, build 0.1.0-p3.42. Public at froobaloo.com/cryptadoodle/ (In prototype tag on the hub card). Lifecycle: Prototype, then Now testing, then live.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -46,10 +46,10 @@ Players guess the real letter behind a code letter. Every tile with that code le
 
 ## Letters Used column
 
-- A column to the right of the gameplay area, under a "Letters Used" header at the theme line.
-- Shows every plain letter guessed so far, right or wrong, in alphabetical order.
-- Green: the letter is in the quote. Grey: it isn't.
-- Header and column are always visible, even when empty.
+- A column to the right of the gameplay area, under a "Letters Used" header.
+- Solved letters: every letter found so far, shown in the same color as solved tiles on the board. Shown whatever is selected.
+- Tried letters: when a code letter is selected, the wrong guesses already tried for that code letter, in grey. Wrong guesses for other code letters aren't shown, since they don't affect this guess.
+- Nothing is shown when no tile is selected and nothing is solved.
 
 ## Layout
 
@@ -116,6 +116,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.42: Letters Used shows solved letters in the solved-tile color, plus the wrong guesses tried for the selected code letter only. Other guesses are hidden.
 - 0.1.0-p3.41: solve warning is its own dialog with "Don't show this again". The solve box shows the whole quote in code and stays above the phone keyboard.
 - 0.1.0-p3.40: Solve quote: type the whole quote. Right reveals everything and awards the most remaining points. Wrong costs 10. Max-points calculation is faster and uses the daily modifiers. Analytics: Solve Quote.
 - 0.1.0-p3.36 (Solve quote, renumbered p3.40): type the whole quote. Right reveals everything and awards the most remaining points. Wrong costs 10. Max-points calculation is faster and uses the daily modifiers.

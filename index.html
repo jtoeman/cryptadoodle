@@ -60,8 +60,8 @@
   #trayWrap.show { display:block; }
   #tray { display:flex; flex-wrap:wrap; justify-content:center; width:64px; gap:4px; }
   #tray span { display:flex; align-items:center; justify-content:center; width:26px; height:30px; border-radius:5px; font-weight:700; font-size:13px; font-family:var(--mono); background:var(--open); color:var(--open-ink); }
-  #tray span.good { background:var(--ok); color:var(--on-ok); }
-  #tray span.grey { background:var(--line); color:var(--ink); }
+  #tray span.found { background:var(--tile-done); color:var(--done-ink); }
+  #tray span.tried { background:var(--line); color:var(--ink); }
   #tray-label { font-size:12px; color:var(--muted); text-align:center; }
 
   .row { display:flex; justify-content:flex-end; align-items:center; gap:8px; }
@@ -170,9 +170,9 @@
 
   <dialog id="trayModal" aria-labelledby="trayTitle">
     <h2 id="trayTitle">Letters Used</h2>
-    <p>The column on the right lists every letter you've guessed, right or wrong.</p>
-    <p><b>Green</b> means that letter is in the quote.</p>
-    <p><b>Grey</b> means it isn't.</p>
+    <p>The column on the right helps you guess well.</p>
+    <p>Letters you've solved show in the same color as solved tiles.</p>
+    <p>When a code letter is selected, the grey letters are guesses you've already tried for that code letter. Guesses for other code letters aren't shown.</p>
     <p><button id="trayClose" class="primary" type="button">Got it</button></p>
   </dialog>
 
@@ -214,7 +214,7 @@
   </dialog>
 
   <footer>
-    <div>Build 0.1.0-p3.41 (prototype)</div>
+    <div>Build 0.1.0-p3.42 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -852,7 +852,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.41", event_properties: { ...(props || {}), game: "cryptadoodle" }
+        platform: "Web", app_version: "0.1.0-p3.42", event_properties: { ...(props || {}), game: "cryptadoodle" }
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
@@ -972,16 +972,20 @@ function render() {
     info.textContent = revealed.size === totalCodeLetters() ? "" : "Tap a tile to start.";
   }
 
-  // letter tray: every letter guessed so far (right or wrong). green = the letter is in the quote; grey = it isn't.
-  const used = new Set([...wrongPairs].map(k => k[1]));
-  foundPlain().forEach(l => used.add(l));
-  const inQuote = new Set(puzzle.words.flat().map(t => t.plain));
+  // letter tray: solved letters (same color as solved tiles), plus, for the selected code letter only,
+  // the wrong guesses already tried for it. Guesses made against other code letters aren't relevant here.
   const tray = document.getElementById("tray");
   tray.innerHTML = "";
-  [...used].sort().forEach(l => {
+  const show = [];
+  foundPlain().forEach(l => show.push([l, "found"]));
+  if (selected) {
+    [...wrongPairs].filter(k => k[0] === selected).map(k => k[1]).sort()
+      .forEach(l => show.push([l, "tried"]));
+  }
+  show.sort((a, b) => a[0].localeCompare(b[0])).forEach(([l, cls]) => {
     const s = document.createElement("span");
     s.textContent = l;
-    s.className = inQuote.has(l) ? "good" : "grey";
+    s.className = cls;
     tray.appendChild(s);
   });
 }
