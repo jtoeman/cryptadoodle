@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.43. Public at froobaloo.com/cryptadoodle/ (In prototype tag on the hub card). Lifecycle: Prototype, then Now testing, then live.
+Status: prototype, build 0.1.0-p3.44. Public at froobaloo.com/cryptadoodle/ (In prototype tag on the hub card). Lifecycle: Prototype, then Now testing, then live.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -119,6 +119,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.44: favicon (favicon.svg), Apple touch icon, theme color, and social preview tags with a card image.
 - 0.1.0-p3.43: desktop tutorial never covers the text entry area. Site verification meta tag added.
 - 0.1.0-p3.42: Letters Used shows solved letters in the solved-tile color, plus the wrong guesses tried for the selected code letter only. Other guesses are hidden.
 - 0.1.0-p3.41: solve warning is its own dialog with "Don't show this again". The solve box shows the whole quote in code and stays above the phone keyboard.
