@@ -1,6 +1,6 @@
 # Cryptadoodle
 
-Status: prototype, build 0.1.0-p3.42. Public at froobaloo.com/cryptadoodle/ (In prototype tag on the hub card). Lifecycle: Prototype, then Now testing, then live.
+Status: prototype, build 0.1.0-p3.43. Public at froobaloo.com/cryptadoodle/ (In prototype tag on the hub card). Lifecycle: Prototype, then Now testing, then live.
 Part of the Froobaloo game hub (froobaloo.com). Repo: jtoeman/cryptadoodle.
 
 ## Concept
@@ -86,6 +86,9 @@ Players guess the real letter behind a code letter. Every tile with that code le
 
 ## Tutorial
 
+- Desktop: the card sits near the middle of the screen, never below the top of the entry area. Phones keep it inside the entry panel.
+- Site verification meta tag (alldle-verify) is in the page head.
+
 - Built in 0.1.0-p3.10 and reworked in 0.1.0-p3.19 and p3.20: interactive guide started from How to play.
 - Steps: tap a tile, make a guess, see a reveal, keep going. No answers are given.
 - Same rules as a real puzzle. Scores and max possible are shown when solved.
@@ -116,6 +119,7 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.11: reads daily quotes from the shared froobaloodb sheet, with built-in fallback.
 - 0.1.0-p3.12: on phones, keeps the selected tile on screen when the keyboard opens.
 - 0.1.0-p3.13: on phones, the code line and guess box float directly above the keyboard, inside a blue border.
+- 0.1.0-p3.43: desktop tutorial never covers the text entry area. Site verification meta tag added.
 - 0.1.0-p3.42: Letters Used shows solved letters in the solved-tile color, plus the wrong guesses tried for the selected code letter only. Other guesses are hidden.
 - 0.1.0-p3.41: solve warning is its own dialog with "Don't show this again". The solve box shows the whole quote in code and stays above the phone keyboard.
 - 0.1.0-p3.40: Solve quote: type the whole quote. Right reveals everything and awards the most remaining points. Wrong costs 10. Max-points calculation is faster and uses the daily modifiers. Analytics: Solve Quote.

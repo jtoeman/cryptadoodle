@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="alldle-verify" content="Ckxwrz10M0Mdz5DQiZ35eqeCxComqKJa">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <title>Cryptadoodle</title>
 <style>
@@ -78,7 +79,7 @@
   /* Desktop: the tutorial sits in the middle of the screen. The card lets clicks through to the
      tiles underneath; only its buttons take clicks, so the tiles it asks for stay usable. */
   @media (min-width: 720px) {
-    #tutorial.tutorial { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:min(460px, calc(100% - 48px)); z-index:20; pointer-events:none; box-shadow:0 8px 28px rgba(0,0,0,.5); }
+    #tutorial.tutorial { position:fixed; left:50%; transform:translateX(-50%); width:min(460px, calc(100% - 48px)); z-index:20; pointer-events:none; box-shadow:0 8px 28px rgba(0,0,0,.5); }
     #tutorial .tutBtns { pointer-events:auto; }
   }
   .tutBtns { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
@@ -214,7 +215,7 @@
   </dialog>
 
   <footer>
-    <div>Build 0.1.0-p3.42 (prototype)</div>
+    <div>Build 0.1.0-p3.43 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -852,7 +853,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.42", event_properties: { ...(props || {}), game: "cryptadoodle" }
+        platform: "Web", app_version: "0.1.0-p3.43", event_properties: { ...(props || {}), game: "cryptadoodle" }
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
@@ -890,18 +891,40 @@ function renderTutorial() {
   while (tutIndex < TUT_STEPS.length && TUT_STEPS[tutIndex].gate && TUT_STEPS[tutIndex].gate()) tutIndex++;
   const done = tutIndex >= TUT_STEPS.length;
   document.getElementById("tutText").innerHTML = done ? TUT_END : TUT_STEPS[tutIndex].text; // static step text only
+  placeTutorial();
   // Next only on steps that don't wait for an action
   document.getElementById("tutNext").hidden = done || TUT_STEPS[tutIndex].gate !== null;
   document.getElementById("tutDone").hidden = !done;
 }
 
 // How to play turns the guide on or off. It works along with today's puzzle.
+// Desktop: the card sits near the middle of the screen, but its bottom edge never goes below the top of
+// the entry area, so it can't cover the text entry. Phones keep the card inside the entry panel.
+function placeTutorial() {
+  const tut = document.getElementById("tutorial");
+  if (!tut) return;
+  const desktop = window.matchMedia ? window.matchMedia("(min-width: 720px)").matches : window.innerWidth >= 720;
+  if (!desktop || tut.style.display === "none") {
+    tut.style.top = ""; tut.style.bottom = "";
+    return;
+  }
+  const h = tut.offsetHeight;
+  const entry = document.getElementById("entry");
+  const entryTop = entry ? entry.getBoundingClientRect().top : window.innerHeight;
+  const middle = (window.innerHeight - h) / 2;
+  const top = Math.max(8, Math.min(middle, entryTop - h - 12));
+  tut.style.top = top + "px";
+  tut.style.bottom = "auto";
+}
+window.addEventListener("resize", placeTutorial);
+
 function toggleTutorial() {
   if (!puzzle) return; // still loading
   tutorialMode = !tutorialMode;
   if (!tutorialMode) storeSet(SEEN_KEY, "1");
   tutIndex = 0; tutFirst = null; trayShown = false;
   render();
+  placeTutorial();
 }
 
 // Words never wrap: shrink the tiles so the longest word fits the play area.
