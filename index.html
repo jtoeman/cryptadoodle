@@ -106,6 +106,7 @@
   .solveCipher { display:flex; flex-wrap:wrap; justify-content:center; gap:8px 14px; margin:8px 0 12px; }
   .solveWord { display:flex; gap:3px; }
   .solveT { width:26px; height:30px; display:flex; align-items:center; justify-content:center; background:var(--open); border:1px solid var(--line); border-radius:5px; font-family:var(--mono); font-weight:700; font-size:14px; color:var(--ink); }
+  .solveT.done { background:var(--tile-done); color:var(--done-ink); border-color:var(--tile-done); }
   #solveModal { width:min(480px, calc(100vw - 24px)); box-sizing:border-box; }
   .consent { border:2px solid var(--accent); border-radius:12px; padding:10px 12px; background:var(--panel); font-size:14px; line-height:1.45; display:flex; flex-direction:column; gap:8px; }
   .consent[hidden] { display:none; }
@@ -225,7 +226,7 @@
   </dialog>
 
   <footer>
-    <div>Build 0.1.0-p3.44 (prototype)</div>
+    <div>Build 0.1.0-p3.45 (prototype)</div>
     <div>
       <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
       <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
@@ -863,7 +864,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.44", event_properties: { ...(props || {}), game: "cryptadoodle" }
+        platform: "Web", app_version: "0.1.0-p3.45", event_properties: { ...(props || {}), game: "cryptadoodle" }
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
@@ -1069,9 +1070,12 @@ function openSolve() {
     const row = document.createElement("div");
     row.className = "solveWord";
     for (const t of w) {
+      // Letters already solved show their plain letter, in the same colour as solved tiles.
+      const solved = revealed.has(t.cipher);
       const tile = document.createElement("span");
-      tile.className = "solveT";
-      tile.textContent = t.cipher;
+      tile.className = solved ? "solveT done" : "solveT";
+      tile.textContent = solved ? t.plain : t.cipher;
+      tile.setAttribute("aria-label", solved ? `${t.plain}, solved` : `code letter ${t.cipher}`);
       row.appendChild(tile);
     }
     board.appendChild(row);
