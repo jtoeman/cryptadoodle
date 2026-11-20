@@ -95,8 +95,11 @@
   .tutBtns { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
   #solvedBox { display:none; background:var(--panel); border:1px solid var(--ok); border-radius:10px; padding:12px; text-align:center; }
   #solvedBox.show { display:block; }
-  footer { margin-top:auto; font-size:13px; color:var(--muted); text-align:center; line-height:1.6; }
+  /* Same footer as the Froobaloo hub: centred credit line, small type. */
+  footer { margin-top:auto; padding:28px 16px 36px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:.75rem; color:var(--muted); text-align:center; line-height:1.6; }
   footer a { color:var(--muted); }
+  /* Froobaloo hub Next up card (from /kit/froobaloo.js). */
+  .froobaloo-next { display:block; margin-top:14px; }
   dialog { border:2px solid var(--accent); border-radius:12px; max-width:400px; width:calc(100% - 24px); color:var(--ink); background:var(--paper); padding:16px; }
   dialog::backdrop { background:rgba(0,0,0,.35); }
   dialog h2 { font-size:18px; margin:0 0 8px; }
@@ -131,6 +134,7 @@
     <p><b>Solved.</b> <span id="finalScore"></span></p>
     <p id="finalQuote" class="muted"></p>
     <p><button id="shareBtn" class="primary" type="button">Share result</button> <span id="shareMsg" class="muted"></span></p>
+    <froobaloo-next class="froobaloo-next" current="cryptadoodle"></froobaloo-next>
   </div>
 
   <div class="stage">
@@ -226,12 +230,8 @@
   </dialog>
 
   <footer>
-    <div>Build 0.1.0-p3.45 (prototype)</div>
-    <div>
-      <a href="https://jeremytoeman.com">JeremyToeman.com</a> ·
-      <a href="https://ko-fi.com/jeremyt37">Ko-fi</a> ·
-      <a href="https://froobaloo.com">Froobaloo</a>
-    </div>
+    <p class="credits">Games 100% Conceived and Curated by <a href="https://jeremytoeman.com">Jeremy Toeman</a>. Game Code 100% Built by Claude.</p>
+    <div>Build 0.1.0-p3.46 (prototype) · <a href="https://ko-fi.com/jeremyt37">Ko-fi</a></div>
   </footer>
 </main>
 
@@ -864,7 +864,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.45", event_properties: { ...(props || {}), game: "cryptadoodle" }
+        platform: "Web", app_version: "0.1.0-p3.46", event_properties: { ...(props || {}), game: "cryptadoodle" }
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
