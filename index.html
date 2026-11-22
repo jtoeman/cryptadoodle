@@ -231,7 +231,7 @@
 
   <footer>
     <p class="credits">Games 100% Conceived and Curated by <a href="https://jeremytoeman.com">Jeremy Toeman</a>. Game Code 100% Built by Claude.</p>
-    <div>Build 0.1.0-p3.46 (prototype) · <a href="https://ko-fi.com/jeremyt37">Ko-fi</a></div>
+    <div>Build <span id="buildLabel">0.1.0-p3.47</span> (prototype) · <a href="https://ko-fi.com/jeremyt37">Ko-fi</a></div>
   </footer>
 </main>
 
@@ -254,6 +254,8 @@ const SHEET_TAB = "Cryptadoodle";
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 // Per-device storage. Private windows or blocked storage just mean no memory between visits.
+// Internal build number. Bump on every deploy. Shown in the footer and sent with every event as "build".
+const BUILD = "0.1.0-p3.47";
 const AMP_KEY = "6ae928be8b28b6eb768a79b0fdf1fb3f"; // Amplitude project: Froobaloo (every game reports here, split by the game property)
 const CONSENT_KEY = "cryptadoodle.analytics";
 const DEVICE_KEY = "cryptadoodle.deviceId";
@@ -440,7 +442,10 @@ function newPuzzle() {
   hideAlert();
   setMsg("");
   render();
+  puzzle.fromArchive = fromArchive;
   track("Puzzle Started", { date: puzzle.date, archive: fromArchive });
+  // Standard cross-game event, sent next to the old name.
+  track("Game Loaded", { puzzle_date: puzzle.date, archive: fromArchive });
 }
 
 // Daily hidden modifier per plain letter: -2..+2, final value never below 1.
@@ -692,6 +697,9 @@ function trySolve(text) {
 
 function showWin() {
   track("Puzzle Completed", { date: puzzle.date, score: score, max_possible: maxPossible(), guesses: guessCount });
+  // Standard cross-game event, sent next to the old name. No result: a puzzle only ends when the
+  // quote is solved, so there is no lose.
+  track("Game Completed", { puzzle_date: puzzle.date, archive: !!puzzle.fromArchive, score: score, score_max: maxPossible(), attempts: guessCount });
   const sb = document.getElementById("solvedBox");
   sb.classList.add("show");
   if (sb.scrollIntoView) sb.scrollIntoView({ block: "start", behavior: "auto" });
@@ -816,7 +824,7 @@ function shareImage() {
 
 async function shareResult() {
   const text = shareText();
-  track("Share Clicked", { date: puzzle.date });
+  track("Share Clicked", { date: puzzle.date, puzzle_date: puzzle.date, score: score });
   const msg = document.getElementById("shareMsg");
   let blob = null;
   try { blob = await shareImage(); } catch (e) { blob = null; }
@@ -846,6 +854,7 @@ let guessCount = 0;         // guesses made on the current puzzle (analytics onl
 
 // Analytics: only after the player says yes. Plain HTTP API, no third-party script.
 // Sends no quote text, names, or accounts: just the event, the date, and numbers.
+(function () { const b = document.getElementById("buildLabel"); if (b) b.textContent = BUILD; })();
 function analyticsOn() { return storeGet(CONSENT_KEY) === "yes"; }
 function deviceId() {
   let id = storeGet(DEVICE_KEY);
@@ -864,7 +873,7 @@ function track(name, props) {
       keepalive: true,
       body: JSON.stringify({ api_key: AMP_KEY, events: [{
         device_id: deviceId(), event_type: name, time: Date.now(),
-        platform: "Web", app_version: "0.1.0-p3.46", event_properties: { ...(props || {}), game: "cryptadoodle" }
+        platform: "Web", app_version: BUILD, event_properties: { ...(props || {}), game: "cryptadoodle", build: BUILD }
       }] })
     }).catch(() => {});
   } catch (e) { /* analytics never breaks the game */ }
@@ -876,7 +885,10 @@ function setAnalytics(on) {
   if (box) box.hidden = true;
   const t = document.getElementById("shareToggle");
   if (t) t.checked = on;
-  if (on && puzzle) track("Puzzle Started", { date: puzzle.date, archive: false, late_consent: true });
+  if (on && puzzle) {
+    track("Puzzle Started", { date: puzzle.date, archive: false, late_consent: true });
+    track("Game Loaded", { puzzle_date: puzzle.date, archive: !!puzzle.fromArchive, late_consent: true });
+  }
 }
 const TUT_STEPS = [
   { text: "Welcome to Cryptadoodle. Every day you get a famous quote or phrase, but all the letters are encrypted. Your job is to work out the message, and score as high as you can along the way.", gate: null },
