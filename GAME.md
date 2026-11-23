@@ -149,5 +149,6 @@ Players guess the real letter behind a code letter. Every tile with that code le
 - 0.1.0-p3.18: tutorial steps advance on their action or on Next, so they can't get stuck.
 - 0.1.0-p3.17: How to play is a separate round; today's progress is kept and restored. Tutorial opens with a welcome and the incentive. Letters Used is centered above its column.
 - 0.1.0-p3.16: archive of past quotes (Past puzzles, ?day=), no status concept, tiles up to 40 px.
+- 0.1.0-p3.48: footer links Froobaloo home; "Past puzzles" renamed "Archive" (shared term).
 - 0.1.0-p3.15: hosted as a hidden test build at froobaloo.com/cryptadoodle/ (noindex, no menu card).
 - 0.1.0-p3.14: How to play and Tutorial are one thing. How to play runs the interactive tutorial, with a blue border.

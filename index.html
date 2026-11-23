@@ -178,7 +178,7 @@
 
   <div class="row">
     <button id="solveBtn" type="button">Solve quote</button>
-    <button id="pastBtn" type="button">Past puzzles</button>
+    <button id="pastBtn" type="button">Archive</button>
     <button id="statsBtn" type="button">Stats</button>
   </div>
 
@@ -231,7 +231,7 @@
 
   <footer>
     <p class="credits">Games 100% Conceived and Curated by <a href="https://jeremytoeman.com">Jeremy Toeman</a>. Game Code 100% Built by Claude.</p>
-    <div>Build <span id="buildLabel">0.1.0-p3.47</span> (prototype) · <a href="https://ko-fi.com/jeremyt37">Ko-fi</a></div>
+    <div><a href="https://froobaloo.com">Froobaloo</a> · Build <span id="buildLabel">0.1.0-p3.48</span> (prototype) · <a href="https://ko-fi.com/jeremyt37">Ko-fi</a></div>
   </footer>
 </main>
 
@@ -255,7 +255,7 @@ const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 // Per-device storage. Private windows or blocked storage just mean no memory between visits.
 // Internal build number. Bump on every deploy. Shown in the footer and sent with every event as "build".
-const BUILD = "0.1.0-p3.47";
+const BUILD = "0.1.0-p3.48";
 const AMP_KEY = "6ae928be8b28b6eb768a79b0fdf1fb3f"; // Amplitude project: Froobaloo (every game reports here, split by the game property)
 const CONSENT_KEY = "cryptadoodle.analytics";
 const DEVICE_KEY = "cryptadoodle.deviceId";
@@ -378,7 +378,7 @@ function togglePast() {
   el.innerHTML = "";
   const list = pastQuotes();
   if (!list.length) {
-    el.textContent = "Past puzzles appear here once the sheet loads.";
+    el.textContent = "Archive entries appear here once the sheet loads.";
   } else {
     list.forEach(q => {
       const b = document.createElement("button");
